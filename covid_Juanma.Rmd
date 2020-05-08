@@ -32,3 +32,59 @@ indices <- which(is.na(covid_datos$Valor))
 covid_datos$Valor[indices] = 0
 
 ```
+
+```{r}
+
+TCFeb <- covid_datos[(format(covid_datos$Fecha, "%m") == '02') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Total confirmados (PCR+test)", ]
+
+TCFeb
+
+TCMarzo <- covid_datos[(format(covid_datos$Fecha, "%m") == '03') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Total confirmados (PCR+test)", ]
+
+TCMarzo
+
+TCAbril <- covid_datos[(format(covid_datos$Fecha, "%m") == '04') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Total confirmados (PCR+test)", ]
+
+TCAbril
+
+gf <- ggplot(TCFeb, aes(x=Fecha, y=Valor)) +
+  geom_point() +
+  geom_line(aes(group = 1)) +
+  labs(title = "Confirmados Febrero",
+       y = "Confirmados",
+       x = "Fecha")
+
+gm <- ggplot(TCMarzo, aes(x=Fecha, y=Valor)) +
+  geom_point() +
+  geom_line(aes(group = 1)) +
+  labs(title = "Confirmados Marzo",
+       y = "Confirmados",
+       x = "Fecha")
+
+ga <- ggplot(TCAbril, aes(x=Fecha, y=Valor)) +
+  geom_point() +
+  geom_line(aes(group = 1)) +
+  labs(title = "Confirmados Abril",
+       y = "Confirmados",
+       x = "Fecha")
+
+figure2 <- ggarrange(gf,gm,ga)
+annotate_figure(figure2, top = text_grob("Confirmados Feb, Mar, Abril", face = "bold", size = 12))
+
+sumF <- sum(TCFeb$Valor)
+
+sumM <- sum(TCMarzo$Valor)
+
+sumA <- sum(TCAbril$Valor)
+
+df <- data.frame(Febrero = sumF, Marzo = sumM, Abril = sumA)
+df
+
+plot(df)
+```
+
+```{r}
+
+
+
+```
