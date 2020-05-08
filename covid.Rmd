@@ -22,15 +22,10 @@ names(covid_datos)[1] <- "Fecha"
 
 covid_datos$Fecha <- as.Date(covid_datos$Fecha, format='%d/%m/%Y')
 
+# Los valores NA los convertimos a 0
 indices <- which(is.na(covid_datos$Valor))
 covid_datos$Valor[indices] = 0
-<<<<<<< HEAD
 
-
-=======
-
-
->>>>>>> 02189e78fe05658bc386582dc315d25769d40b25
 ggplot(covid_datos[covid_datos$Medida == "Confirmados " & covid_datos$Territorio == "Spain", ], aes(x=Fecha, y=Valor)) +
   geom_point() +
   labs(title="Casos Confirmados en España", 
