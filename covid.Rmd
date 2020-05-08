@@ -7,19 +7,26 @@ output: html_document
 
 
 ```{r }
-
-covid_datos <- read.csv("Datasets/covid_datos.txt", sep=";")
-covid_datos <- covid_datos[, 1:4]
-
 library(dplyr)
 library(ggplot2)
 library(ggridges)
 library(ggpubr)
 
+covid_datos <- read.csv("Datasets/covid_datos.txt", sep=";", encoding = "UTF-8")
+
+# Se genera una ultima columna al finalizar cada linea con ';' por lo que la eliminamos
+covid_datos <- covid_datos[, 1:4]
+
+# Para evitar problemas con los acentos en las columnas cambiamos el nombre de la primera
+names(covid_datos)[1] <- "Fecha"
+
 covid_datos$Fecha <- as.Date(covid_datos$Fecha, format='%d/%m/%Y')
 
+indices <- which(is.na(covid_datos$Valor))
+covid_datos$Valor[indices] = 0
 
-ggplot(covid_datos[covid_datos$Medida == "Confirmados" & covid_datos$Territorio == "Spain", ], aes(x=Fecha, y=Valor)) +
+
+ggplot(covid_datos[covid_datos$Medida == "Confirmados " & covid_datos$Territorio == "Spain", ], aes(x=Fecha, y=Valor)) +
   geom_point() +
   labs(title="Casos Confirmados en España", 
          y = "Confirmados", 
