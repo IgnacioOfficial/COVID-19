@@ -8,8 +8,10 @@ output: html_document
 
 ```{r }
 
-covid_datos <- read.csv("covid_datos.txt", sep=";")
+covid_datos <- read.csv("Datasets/covid_datos.txt", sep=";")
 covid_datos <- covid_datos[, 1:4]
+
+library(dplyr)
 library(ggplot2)
 library(ggridges)
 library(ggpubr)
@@ -86,5 +88,8 @@ ggplot(covid_datos[covid_datos$Medida == "Confirmados" & covid_datos$Territorio 
 
 ```{r }
 
+## En Proceso
 
+top_3 <- covid_datos[covid_datos$Territorio != "spain" & covid_datos$Territorio != "Andalucia" & covid_datos$Medida == "confirmados"] %>%
+  top_n()
 ```
