@@ -91,12 +91,3 @@ ggplot(covid_datos[covid_datos$Medida == "Confirmados" & covid_datos$Territorio 
 ```
 
 
-
-
-```{r }
-
-## En Proceso
-
-top_3 <- covid_datos[covid_datos$Territorio != "spain" & covid_datos$Territorio != "Andalucia" & covid_datos$Medida == "confirmados"] %>%
-  top_n()
-```
