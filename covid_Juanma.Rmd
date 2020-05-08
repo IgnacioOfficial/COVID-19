@@ -71,20 +71,26 @@ ga <- ggplot(TCAbril, aes(x=Fecha, y=Valor)) +
 figure2 <- ggarrange(gf,gm,ga)
 annotate_figure(figure2, top = text_grob("Confirmados Feb, Mar, Abril", face = "bold", size = 12))
 
+figure2
+
+
+
+```
+
+```{r}
+
+# Números Totales Confirmados por Meses
+
 sumF <- sum(TCFeb$Valor)
 
 sumM <- sum(TCMarzo$Valor)
 
 sumA <- sum(TCAbril$Valor)
 
-df <- data.frame(Febrero = sumF, Marzo = sumM, Abril = sumA)
-df
+vMeses <- c(Febrero = sumF, Marzo = sumM, Abril = sumA)
 
-plot(df)
-```
+vMeses
 
-```{r}
-
-
+barplot(vMeses)
 
 ```
