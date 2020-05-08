@@ -1,0 +1,34 @@
+---
+title: "covid_Juanma"
+author: "Juan Manuel Morales Joya"
+date: "8/5/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## visualización Juanma
+
+```{r}
+
+library(dplyr)
+library(ggplot2)
+library(ggridges)
+library(ggpubr)
+
+covid_datos <- read.csv("Datasets/covid_datos.txt", sep=";", encoding = "UTF-8")
+
+# Se genera una ultima columna al finalizar cada linea con ';' por lo que la eliminamos
+covid_datos <- covid_datos[, 1:4]
+
+# Para evitar problemas con los acentos en las columnas cambiamos el nombre de la primera
+names(covid_datos)[1] <- "Fecha"
+
+covid_datos$Fecha <- as.Date(covid_datos$Fecha, format='%d/%m/%Y')
+
+indices <- which(is.na(covid_datos$Valor))
+covid_datos$Valor[indices] = 0
+
+```

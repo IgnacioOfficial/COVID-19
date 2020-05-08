@@ -24,8 +24,13 @@ covid_datos$Fecha <- as.Date(covid_datos$Fecha, format='%d/%m/%Y')
 
 indices <- which(is.na(covid_datos$Valor))
 covid_datos$Valor[indices] = 0
+<<<<<<< HEAD
 
 
+=======
+
+
+>>>>>>> 02189e78fe05658bc386582dc315d25769d40b25
 ggplot(covid_datos[covid_datos$Medida == "Confirmados " & covid_datos$Territorio == "Spain", ], aes(x=Fecha, y=Valor)) +
   geom_point() +
   labs(title="Casos Confirmados en España", 
@@ -91,12 +96,3 @@ ggplot(covid_datos[covid_datos$Medida == "Confirmados" & covid_datos$Territorio 
 ```
 
 
-
-
-```{r }
-
-## En Proceso
-
-top_3 <- covid_datos[covid_datos$Territorio != "spain" & covid_datos$Territorio != "Andalucia" & covid_datos$Medida == "confirmados"] %>%
-  top_n()
-```
