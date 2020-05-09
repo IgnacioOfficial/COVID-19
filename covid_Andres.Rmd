@@ -1,0 +1,168 @@
+---
+title: "Analisis Covid-19 Andalucia"
+author: "Andrés Suárez Mediavilla"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+---
+
+```{r message=FALSE}
+library(dplyr)
+library(ggplot2)
+
+# Preprocesamiento de los datos
+
+covid_datos <- read.csv("Datasets/covid_datos.txt", sep=";", encoding = "UTF-8")
+
+# Se genera una ultima columna al finalizar cada linea con ';' por lo que la eliminamos
+covid_datos <- covid_datos[, 1:4]
+
+# Para evitar problemas con los acentos en las columnas cambiamos el nombre de la primera
+names(covid_datos)[1] <- "Fecha"
+
+covid_datos$Fecha <- as.Date(covid_datos$Fecha, format='%d/%m/%Y')
+
+# Los valores NA los convertimos a 0
+indices <- which(is.na(covid_datos$Valor))
+covid_datos$Valor[indices] = 0
+
+
+
+## GRAFICAS ## 
+# Selecciono los datos que voy a representar
+confirmadosPCR <- filter(covid_datos, Medida == "Confirmados PCR", Territorio != "Andalucía")
+
+# Almaceno los valores maximos alcanzados agrupados por territorios
+maximos <- confirmadosPCR %>% group_by(Territorio) %>%
+  filter(Valor == max(Valor))
+
+## Primer tipo de representacion
+# Grafico de todas las provincias con valores maximos marcados
+g1 <- ggplot(confirmadosPCR, aes(x = Fecha, y = Valor)) +
+  ylim(min = 0, max = max(maximos$Valor+50)) +
+  geom_line(aes(color = Territorio)) +
+  geom_point(data = maximos) +
+  geom_text(maximos, mapping = aes(label = Valor), hjust =-0.3, vjust = 0.3, angle = 60) +
+  ylab("Confirmados por PCR") +
+  ggtitle("Comparativa positivos por provincia")
+g1
+
+# Grid con los graficos individuales de provincias
+g2 <- ggplot(confirmadosPCR, aes(x = Fecha, y = Valor)) +
+  geom_line() +
+  ylim(min = 0, max = max(maximos$Valor+100)) +
+  ylab("Confirmados por PCR") +
+  facet_wrap(~Territorio, ncol = 2) +
+  geom_point(data = maximos) +
+  geom_label(maximos, mapping = aes(label = Valor), hjust = -0.2, vjust = -0.1) +
+  theme_light() +  
+  ggtitle("Graficos individuales de cada provincia")
+g2
+
+## Seguindo tipo
+# Representare el total de infectados y el total de curados en Andalucia
+
+curados_confirmados_PCR_Test <- covid_datos %>% 
+  filter(Medida == "Total confirmados (PCR+test)" | Medida == "Curados", Territorio == "Andalucía") %>%
+  arrange(Fecha) # Ordenado desde el primer positivo hasta el dia de hoy
+
+# Invierto el valor de los curados para mostrar el contraste en la grafica
+indices <- which(curados_confirmados_PCR_Test$Medida == "Curados")
+curados_confirmados_PCR_Test[indices, "Valor"] <- -curados_confirmados_PCR_Test[indices, "Valor"]
+
+medias <- curados_confirmados_PCR_Test$Valor[c(TRUE, FALSE)]+
+  curados_confirmados_PCR_Test$Valor[c(FALSE, TRUE)]
+
+mediaDia <- covid_datos %>% select(Fecha) %>%
+  arrange(Fecha) %>%
+  unique %>%
+  mutate(medias)
+
+# Falta por solucionar que se muestre la leyenda de la linea roja
+
+g3 <- ggplot(curados_confirmados_PCR_Test, aes(x = Fecha, y = Valor))+
+  geom_bar(aes(fill = Medida),stat = "identity") +
+  geom_line(mediaDia, mapping = aes(x = Fecha, y = medias), color = "red") +
+  scale_fill_manual(values = c("green", "darkblue")) +
+  theme_minimal()+
+  ggtitle("Gráfico comparativo infectados + curados y trazado de la media")
+g3
+
+# Otro grafico viendo el porcentaje acumulado por provincia
+# Incidencias acumuladas
+confirmados_PCR_Test <- covid_datos %>%
+  filter(Medida == "Total confirmados (PCR+test)", Territorio != "Andalucía") %>%
+  arrange(Fecha)
+
+# Calculo la suma total de casos por provincia
+malaga <- confirmados_PCR_Test %>%
+  filter(Territorio == "Málaga") %>%
+  select(Valor) %>%
+  sum()
+
+sevilla <- confirmados_PCR_Test %>%
+  filter(Territorio == "Sevilla") %>%
+  select(Valor) %>%
+  sum()
+
+granada <- confirmados_PCR_Test %>%
+  filter(Territorio == "Granada") %>%
+  select(Valor) %>%
+  sum()
+
+cordoba <- confirmados_PCR_Test %>%
+  filter(Territorio == "Córdoba") %>%
+  select(Valor) %>%
+  sum()
+
+cadiz <- confirmados_PCR_Test %>%
+  filter(Territorio == "Cádiz") %>%
+  select(Valor) %>%
+  sum()
+
+huelva <- confirmados_PCR_Test %>%
+  filter(Territorio == "Huelva") %>%
+  select(Valor) %>%
+  sum()
+
+almeria <- confirmados_PCR_Test %>%
+  filter(Territorio == "Almería") %>%
+  select(Valor) %>%
+  sum()
+
+jaen <- confirmados_PCR_Test %>%
+  filter(Territorio == "Jaén") %>%
+  select(Valor) %>%
+  sum()
+
+# Calculo el total de casos
+total <- sum(malaga, jaen, sevilla, cordoba, granada, cadiz, almeria, huelva)
+
+# A partir de aqui, creo un data frame con los datos necesarios para poder representar un grafico en forma de tarta
+territorios <- covid_datos %>% filter(Territorio != "Andalucía") %>%
+  select(Territorio) %>%
+  unique()
+
+p <- function(num, t){
+  return(round(num/t*100, 2))
+}
+
+df <- data.frame(territorios[1], Acumulado = c(almeria,cadiz, cordoba, granada, huelva, jaen, malaga, sevilla), Porcentaje = c(p(almeria, total),p(cadiz, total),p(cordoba, total),p(granada, total),p(huelva, total),p(jaen, total),p(malaga, total),p(sevilla, total)))
+
+# Colores a usar en el grafico
+colores <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
+          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+# Grafico de tarta
+g4 <- ggplot(df, aes(x = "", y = Porcentaje, fill = Territorio)) +
+  geom_bar(width = 1, stat = "identity", color = "white") +
+  coord_polar("y", start = 0)+
+  scale_fill_manual(values = colores) +
+  theme_void()+
+  geom_text(aes(label = Porcentaje), position = position_stack(vjust = 0.5))+
+  ggtitle("Porcentaje distribución de infectados en Andalucía")
+g4
+```
+
