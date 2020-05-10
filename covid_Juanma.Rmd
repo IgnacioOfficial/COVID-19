@@ -26,12 +26,16 @@ covid_datos <- covid_datos[, 1:4]
 # Para evitar problemas con los acentos en las columnas cambiamos el nombre de la primera
 names(covid_datos)[1] <- "Fecha"
 
+#Cambiamos el formato de fecha
 covid_datos$Fecha <- as.Date(covid_datos$Fecha, format='%d/%m/%Y')
 
+#Cambiamos los NA por 0
 indices <- which(is.na(covid_datos$Valor))
 covid_datos$Valor[indices] = 0
 
 ```
+
+Gráficas Infectados en Andalucía por Covid-19 al día, separados en meses.
 
 ```{r}
 
@@ -71,11 +75,10 @@ ga <- ggplot(TCAbril, aes(x=Fecha, y=Valor)) +
 figure2 <- ggarrange(gf,gm,ga)
 annotate_figure(figure2, top = text_grob("Confirmados Feb, Mar, Abril", face = "bold", size = 12))
 
-figure2
-
-
 
 ```
+
+Confirmados totales por meses en Andalucía
 
 ```{r}
 
@@ -91,6 +94,52 @@ vMeses <- c(Febrero = sumF, Marzo = sumM, Abril = sumA)
 
 vMeses
 
-barplot(vMeses)
+barplot(vMeses, col = c("red", "orange", "yellow"))
+
+```
+
+Diferencias entre Hospitalizados Totales y los que están graves (UCI) por meses en Andalucía.
+
+```{r}
+
+hosAndF <- covid_datos[(format(covid_datos$Fecha, "%m") == '02') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Hospitalizados", ]
+
+sumhaF <- sum(hosAndF$Valor)
+
+UCIAndF <- covid_datos[(format(covid_datos$Fecha, "%m") == '02') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "UCI", ]
+
+sumUaF <- sum(UCIAndF$Valor)
+
+
+
+hosAndM <- covid_datos[(format(covid_datos$Fecha, "%m") == '03') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Hospitalizados", ]
+
+sumhaM <- sum(hosAndM$Valor)
+
+UCIAndM <- covid_datos[(format(covid_datos$Fecha, "%m") == '03') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "UCI", ]
+
+sumUaM <- sum(UCIAndM$Valor)
+
+
+
+hosAndA <- covid_datos[(format(covid_datos$Fecha, "%m") == '04') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Hospitalizados", ]
+
+sumhaA <- sum(hosAndA$Valor)
+
+UCIAndA <- covid_datos[(format(covid_datos$Fecha, "%m") == '04') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "UCI", ]
+
+sumUaA <- sum(UCIAndA$Valor)
+
+dat <- data.frame(
+  Fecha = factor(c("Febrero","Febrero", "Marzo", "Marzo", "Abril", "Abril"), levels = c("Febrero", "Marzo", "Abril")),
+  Tipo = c("Hospitalizado", "UCI"),
+  Valor = c(sumhaF,sumUaF,sumhaM, sumUaM, sumhaA, sumUaA)
+)
+
+dat
+
+ggplot() + 
+ geom_bar(data=dat,aes(x=Valor, y=Fecha,fill=Tipo), stat='identity', position='dodge') +
+ coord_flip()
 
 ```
