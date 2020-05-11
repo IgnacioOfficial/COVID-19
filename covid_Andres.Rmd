@@ -8,11 +8,11 @@ output:
     highlight: github
 ---
 
-```{r message=FALSE}
+# Procesamiento de los datos
+
+```{r warning=FALSE, message=FALSE}
 library(dplyr)
 library(ggplot2)
-
-# Preprocesamiento de los datos
 
 covid_datos <- read.csv("Datasets/covid_datos.txt", sep=";", encoding = "UTF-8")
 
@@ -27,19 +27,23 @@ covid_datos$Fecha <- as.Date(covid_datos$Fecha, format='%d/%m/%Y')
 # Los valores NA los convertimos a 0
 indices <- which(is.na(covid_datos$Valor))
 covid_datos$Valor[indices] = 0
+```
 
+# Graficas
 
-
+```{r}
 ## GRAFICAS ## 
+
 # Selecciono los datos que voy a representar
 confirmadosPCR <- filter(covid_datos, Medida == "Confirmados PCR", Territorio != "Andalucía")
 
-# Almaceno los valores maximos alcanzados agrupados por territorios
+# Almaceno los valores maximos alcanzados agrupados por territorios hacieno uso de las funciones del paquete DPLYR
 maximos <- confirmadosPCR %>% group_by(Territorio) %>%
   filter(Valor == max(Valor))
 
 ## Primer tipo de representacion
 # Grafico de todas las provincias con valores maximos marcados
+# Añado un margen extra en el limite del eje Y para que la representacion se vea clara
 g1 <- ggplot(confirmadosPCR, aes(x = Fecha, y = Valor)) +
   ylim(min = 0, max = max(maximos$Valor+50)) +
   geom_line(aes(color = Territorio)) +
@@ -62,7 +66,7 @@ g2 <- ggplot(confirmadosPCR, aes(x = Fecha, y = Valor)) +
 g2
 
 ## Seguindo tipo
-# Representare el total de infectados y el total de curados en Andalucia
+# Representacion del total de infectados y el total de curados en Andalucia
 
 curados_confirmados_PCR_Test <- covid_datos %>% 
   filter(Medida == "Total confirmados (PCR+test)" | Medida == "Curados", Territorio == "Andalucía") %>%
@@ -80,13 +84,14 @@ mediaDia <- covid_datos %>% select(Fecha) %>%
   unique %>%
   mutate(medias)
 
-# Falta por solucionar que se muestre la leyenda de la linea roja
+# El grafico esta compuesto de dos barras, una indicando los infectados, y otra barra invertida indicando los curados de ese dia. Así mismo, se muestra el trazado del balance infectados-curados, haciendo la diferencia entre las variables para cada dia
 
 g3 <- ggplot(curados_confirmados_PCR_Test, aes(x = Fecha, y = Valor))+
   geom_bar(aes(fill = Medida),stat = "identity") +
-  geom_line(mediaDia, mapping = aes(x = Fecha, y = medias), color = "red") +
+  geom_line(mediaDia, mapping = aes(x = Fecha, y = medias, color = "red"), size = 1) +
   scale_fill_manual(values = c("green", "darkblue")) +
   theme_minimal()+
+  scale_color_manual(name = "Infectados-Curados", values = "red", label = "Balance")+
   ggtitle("Gráfico comparativo infectados + curados y trazado de la media")
 g3
 
@@ -155,7 +160,9 @@ df <- data.frame(territorios[1], Acumulado = c(almeria,cadiz, cordoba, granada, 
 colores <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
           "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-# Grafico de tarta
+## Grafico de tarta
+# Este grafico es una combinacion de un stacked bar chart y coordenadas polares.
+# los parametros de la funcion coord_polar son theta y start, theta sirve para situar el eje de mapeo de angulos, y el start se corresponde con el desplazamiento que queramos realizar en el punto incial en radiades.
 g4 <- ggplot(df, aes(x = "", y = Porcentaje, fill = Territorio)) +
   geom_bar(width = 1, stat = "identity", color = "white") +
   coord_polar("y", start = 0)+
@@ -164,5 +171,6 @@ g4 <- ggplot(df, aes(x = "", y = Porcentaje, fill = Territorio)) +
   geom_text(aes(label = Porcentaje), position = position_stack(vjust = 0.5))+
   ggtitle("Porcentaje distribución de infectados en Andalucía")
 g4
+
 ```
 
