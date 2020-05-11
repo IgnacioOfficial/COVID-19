@@ -1,0 +1,316 @@
+---
+title: "Visualización"
+author: "Grupo G3"
+date: "11/5/2020"
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+---
+
+# Procesamiento de los datos
+
+```{r warning=FALSE, message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(ggridges)
+library(ggpubr)
+
+covid_datos <- read.csv("Datasets/covid_datos.txt", sep=";", encoding = "UTF-8")
+
+# Se genera una ultima columna al finalizar cada linea con ';' por lo que la eliminamos
+covid_datos <- covid_datos[, 1:4]
+
+# Para evitar problemas con los acentos en las columnas cambiamos el nombre de la primera
+names(covid_datos)[1] <- "Fecha"
+
+covid_datos$Fecha <- as.Date(covid_datos$Fecha, format='%d/%m/%Y')
+
+# Los valores NA los convertimos a 0
+indices <- which(is.na(covid_datos$Valor))
+covid_datos$Valor[indices] = 0
+```
+
+# Gráficas
+
+``` {r }
+
+confAndalucia <- covid_datos %>% 
+  filter(Medida == "Total confirmados (PCR+test)" & Territorio == "Andalucía") %>%
+  arrange(Fecha) 
+
+ggplot(confAndalucia, aes(x=Fecha, y=Valor)) +
+  geom_point() +
+  geom_line(color='steelblue') +
+  labs(title="Casos confirmados (PCR+test) en Andalucía", 
+         y = "Confirmados", 
+         x = "Fecha")
+
+ggplot(confAndalucia, aes(x=Fecha, y=cumsum(Valor))) +
+  geom_point() +
+  geom_line(color='steelblue') +
+  labs(title="Casos confirmados (PCR+test) acumulados en Andalucía", 
+         y = "Confirmados", 
+         x = "Fecha")
+  
+
+```
+
+``` {r }
+
+p1 <- ggplot(covid_datos[covid_datos$Medida == "Defunciones" & covid_datos$Territorio == "Andalucía", ], aes(x=Fecha)) + 
+  ylim(-100, 520) +
+  geom_line(aes(y = Valor), color = "darkred")
+
+p2 <- ggplot(covid_datos[covid_datos$Medida == "Curados" & covid_datos$Territorio == "Andalucía", ], aes(x=Fecha)) + 
+  ylim(-100, 520) +
+  geom_line(aes(y = Valor), color = "darkred")
+
+figure <- ggarrange(p1,p2)
+annotate_figure(figure,
+                top = text_grob("Defunciones vs Curados", color = "red", face = "bold", size = 14))
+
+```
+
+
+```{r}
+
+# Selecciono los datos que voy a representar
+confirmadosPCR <- filter(covid_datos, Medida == "Confirmados PCR", Territorio != "Andalucía")
+
+# Almaceno los valores maximos alcanzados agrupados por territorios hacieno uso de las funciones del paquete DPLYR
+maximos <- confirmadosPCR %>% group_by(Territorio) %>%
+  filter(Valor == max(Valor))
+
+## Primer tipo de representacion
+# Grafico de todas las provincias con valores maximos marcados
+# Añado un margen extra en el limite del eje Y para que la representacion se vea clara
+g1 <- ggplot(confirmadosPCR, aes(x = Fecha, y = Valor)) +
+  ylim(min = 0, max = max(maximos$Valor+50)) +
+  geom_line(aes(color = Territorio)) +
+  geom_point(data = maximos) +
+  geom_text(maximos, mapping = aes(label = Valor), hjust =-0.3, vjust = 0.3, angle = 60) +
+  ylab("Confirmados por PCR") +
+  ggtitle("Comparativa positivos por provincia")
+g1
+
+# Grid con los graficos individuales de provincias
+g2 <- ggplot(confirmadosPCR, aes(x = Fecha, y = Valor)) +
+  geom_line() +
+  ylim(min = 0, max = max(maximos$Valor+100)) +
+  ylab("Confirmados por PCR") +
+  facet_wrap(~Territorio, ncol = 2) +
+  geom_point(data = maximos) +
+  geom_label(maximos, mapping = aes(label = Valor), hjust = -0.2, vjust = -0.1) +
+  theme_light() +  
+  ggtitle("Graficos individuales de cada provincia")
+g2
+
+## Seguindo tipo
+# Representacion del total de infectados y el total de curados en Andalucia
+
+curados_confirmados_PCR_Test <- covid_datos %>% 
+  filter(Medida == "Total confirmados (PCR+test)" | Medida == "Curados", Territorio == "Andalucía") %>%
+  arrange(Fecha) # Ordenado desde el primer positivo hasta el dia de hoy
+
+# Invierto el valor de los curados para mostrar el contraste en la grafica
+indices <- which(curados_confirmados_PCR_Test$Medida == "Curados")
+curados_confirmados_PCR_Test[indices, "Valor"] <- -curados_confirmados_PCR_Test[indices, "Valor"]
+
+medias <- curados_confirmados_PCR_Test$Valor[c(TRUE, FALSE)]+
+  curados_confirmados_PCR_Test$Valor[c(FALSE, TRUE)]
+
+mediaDia <- covid_datos %>% select(Fecha) %>%
+  arrange(Fecha) %>%
+  unique %>%
+  mutate(medias)
+
+# El grafico esta compuesto de dos barras, una indicando los infectados, y otra barra invertida indicando los curados de ese dia. Así mismo, se muestra el trazado del balance infectados-curados, haciendo la diferencia entre las variables para cada dia
+
+g3 <- ggplot(curados_confirmados_PCR_Test, aes(x = Fecha, y = Valor))+
+  geom_bar(aes(fill = Medida),stat = "identity") +
+  geom_line(mediaDia, mapping = aes(x = Fecha, y = medias, color = "red"), size = 1) +
+  scale_fill_manual(values = c("green", "darkblue")) +
+  theme_minimal()+
+  scale_color_manual(name = "Infectados-Curados", values = "red", label = "Balance")+
+  ggtitle("Gráfico comparativo infectados + curados y trazado de la media")
+g3
+
+# Otro grafico viendo el porcentaje acumulado por provincia
+# Incidencias acumuladas
+confirmados_PCR_Test <- covid_datos %>%
+  filter(Medida == "Total confirmados (PCR+test)", Territorio != "Andalucía") %>%
+  arrange(Fecha)
+
+# Calculo la suma total de casos por provincia
+malaga <- confirmados_PCR_Test %>%
+  filter(Territorio == "Málaga") %>%
+  select(Valor) %>%
+  sum()
+
+sevilla <- confirmados_PCR_Test %>%
+  filter(Territorio == "Sevilla") %>%
+  select(Valor) %>%
+  sum()
+
+granada <- confirmados_PCR_Test %>%
+  filter(Territorio == "Granada") %>%
+  select(Valor) %>%
+  sum()
+
+cordoba <- confirmados_PCR_Test %>%
+  filter(Territorio == "Córdoba") %>%
+  select(Valor) %>%
+  sum()
+
+cadiz <- confirmados_PCR_Test %>%
+  filter(Territorio == "Cádiz") %>%
+  select(Valor) %>%
+  sum()
+
+huelva <- confirmados_PCR_Test %>%
+  filter(Territorio == "Huelva") %>%
+  select(Valor) %>%
+  sum()
+
+almeria <- confirmados_PCR_Test %>%
+  filter(Territorio == "Almería") %>%
+  select(Valor) %>%
+  sum()
+
+jaen <- confirmados_PCR_Test %>%
+  filter(Territorio == "Jaén") %>%
+  select(Valor) %>%
+  sum()
+
+# Calculo el total de casos
+total <- sum(malaga, jaen, sevilla, cordoba, granada, cadiz, almeria, huelva)
+
+# A partir de aqui, creo un data frame con los datos necesarios para poder representar un grafico en forma de tarta
+territorios <- covid_datos %>% filter(Territorio != "Andalucía") %>%
+  select(Territorio) %>%
+  unique()
+
+p <- function(num, t){
+  return(round(num/t*100, 2))
+}
+
+df <- data.frame(territorios[1], Acumulado = c(almeria,cadiz, cordoba, granada, huelva, jaen, malaga, sevilla), Porcentaje = c(p(almeria, total),p(cadiz, total),p(cordoba, total),p(granada, total),p(huelva, total),p(jaen, total),p(malaga, total),p(sevilla, total)))
+
+# Colores a usar en el grafico
+colores <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
+          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+## Grafico de tarta
+# Este grafico es una combinacion de un stacked bar chart y coordenadas polares.
+# los parametros de la funcion coord_polar son theta y start, theta sirve para situar el eje de mapeo de angulos, y el start se corresponde con el desplazamiento que queramos realizar en el punto incial en radiades.
+g4 <- ggplot(df, aes(x = "", y = Porcentaje, fill = Territorio)) +
+  geom_bar(width = 1, stat = "identity", color = "white") +
+  coord_polar("y", start = 0)+
+  scale_fill_manual(values = colores) +
+  theme_void()+
+  geom_text(aes(label = Porcentaje), position = position_stack(vjust = 0.5))+
+  ggtitle("Porcentaje distribución de infectados en Andalucía")
+g4
+
+```
+
+
+Gráficas Infectados en Andalucía por Covid-19 al día, separados en meses.
+
+```{r}
+
+TCFeb <- covid_datos[(format(covid_datos$Fecha, "%m") == '02') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Total confirmados (PCR+test)", ]
+
+TCMarzo <- covid_datos[(format(covid_datos$Fecha, "%m") == '03') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Total confirmados (PCR+test)", ]
+
+TCAbril <- covid_datos[(format(covid_datos$Fecha, "%m") == '04') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Total confirmados (PCR+test)", ]
+
+gf <- ggplot(TCFeb, aes(x=Fecha, y=Valor)) +
+  geom_point() +
+  geom_line(aes(group = 1)) +
+  labs(title = "Confirmados Febrero",
+       y = "Confirmados",
+       x = "Fecha")
+
+gm <- ggplot(TCMarzo, aes(x=Fecha, y=Valor)) +
+  geom_point() +
+  geom_line(aes(group = 1)) +
+  labs(title = "Confirmados Marzo",
+       y = "Confirmados",
+       x = "Fecha")
+
+ga <- ggplot(TCAbril, aes(x=Fecha, y=Valor)) +
+  geom_point() +
+  geom_line(aes(group = 1)) +
+  labs(title = "Confirmados Abril",
+       y = "Confirmados",
+       x = "Fecha")
+
+figure2 <- ggarrange(gf,gm,ga)
+annotate_figure(figure2, top = text_grob("Confirmados Feb, Mar, Abril", face = "bold", size = 12))
+
+
+```
+
+Confirmados totales por meses en Andalucía
+
+```{r}
+
+# Números Totales Confirmados por Meses
+
+sumF <- sum(TCFeb$Valor)
+
+sumM <- sum(TCMarzo$Valor)
+
+sumA <- sum(TCAbril$Valor)
+
+vMeses <- c(Febrero = sumF, Marzo = sumM, Abril = sumA)
+
+barplot(vMeses, col = c("red", "orange", "yellow"))
+
+```
+
+Diferencias entre Hospitalizados Totales y los que están graves (UCI) por meses en Andalucía.
+
+```{r}
+
+hosAndF <- covid_datos[(format(covid_datos$Fecha, "%m") == '02') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Hospitalizados", ]
+
+sumhaF <- sum(hosAndF$Valor)
+
+UCIAndF <- covid_datos[(format(covid_datos$Fecha, "%m") == '02') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "UCI", ]
+
+sumUaF <- sum(UCIAndF$Valor)
+
+
+
+hosAndM <- covid_datos[(format(covid_datos$Fecha, "%m") == '03') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Hospitalizados", ]
+
+sumhaM <- sum(hosAndM$Valor)
+
+UCIAndM <- covid_datos[(format(covid_datos$Fecha, "%m") == '03') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "UCI", ]
+
+sumUaM <- sum(UCIAndM$Valor)
+
+
+
+hosAndA <- covid_datos[(format(covid_datos$Fecha, "%m") == '04') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Hospitalizados", ]
+
+sumhaA <- sum(hosAndA$Valor)
+
+UCIAndA <- covid_datos[(format(covid_datos$Fecha, "%m") == '04') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "UCI", ]
+
+sumUaA <- sum(UCIAndA$Valor)
+
+dat <- data.frame(
+  Fecha = factor(c("Febrero","Febrero", "Marzo", "Marzo", "Abril", "Abril"), levels = c("Febrero", "Marzo", "Abril")),
+  Tipo = c("Hospitalizado", "UCI"),
+  Valor = c(sumhaF,sumUaF,sumhaM, sumUaM, sumhaA, sumUaA)
+)
+
+ggplot() + 
+ geom_bar(data=dat,aes(x=Valor, y=Fecha,fill=Tipo), stat='identity', position='dodge') +
+ coord_flip()
+
+```

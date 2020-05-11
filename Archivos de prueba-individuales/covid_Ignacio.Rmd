@@ -1,0 +1,100 @@
+---
+title: "CoVID-19"
+author: "Ignacio Pascual"
+date: "8/5/2020"
+output: html_document
+---
+
+
+```{r }
+library(dplyr)
+library(ggplot2)
+library(ggridges)
+library(ggpubr)
+
+covid_datos <- read.csv("Datasets/covid_datos.txt", sep=";", encoding = "UTF-8")
+
+# Se genera una ultima columna al finalizar cada linea con ';' por lo que la eliminamos
+covid_datos <- covid_datos[, 1:4]
+
+# Para evitar problemas con los acentos en las columnas cambiamos el nombre de la primera
+names(covid_datos)[1] <- "Fecha"
+
+covid_datos$Fecha <- as.Date(covid_datos$Fecha, format='%d/%m/%Y')
+
+# Los valores NA los convertimos a 0
+indices <- which(is.na(covid_datos$Valor))
+covid_datos$Valor[indices] = 0
+
+```
+
+``` {r }
+
+confAndalucia <- covid_datos %>% 
+  filter(Medida == "Total confirmados (PCR+test)" & Territorio == "Andalucía") %>%
+  arrange(Fecha) 
+
+ggplot(confAndalucia, aes(x=Fecha, y=Valor)) +
+  geom_point() +
+  geom_line(color='steelblue') +
+  labs(title="Casos confirmados (PCR+test) en Andalucía", 
+         y = "Confirmados", 
+         x = "Fecha")
+
+ggplot(confAndalucia, aes(x=Fecha, y=cumsum(Valor))) +
+  geom_point() +
+  geom_line(color='steelblue') +
+  labs(title="Casos confirmados (PCR+test) acumulados en Andalucía", 
+         y = "Confirmados", 
+         x = "Fecha")
+  
+
+```
+
+``` {r }
+
+p1 <- ggplot(covid_datos[covid_datos$Medida == "Defunciones" & covid_datos$Territorio == "Andalucía", ], aes(x=Fecha)) + 
+  ylim(-100, 520) +
+  geom_line(aes(y = Valor), color = "darkred")
+
+p2 <- ggplot(covid_datos[covid_datos$Medida == "Curados" & covid_datos$Territorio == "Andalucía", ], aes(x=Fecha)) + 
+  ylim(-100, 520) +
+  geom_line(aes(y = Valor), color = "darkred")
+
+figure <- ggarrange(p1,p2)
+annotate_figure(figure,
+                top = text_grob("Defunciones vs Curados", color = "red", face = "bold", size = 14))
+
+```
+
+
+```{r }
+
+ggplot(covid_datos[covid_datos$Medida == "Confirmados PCR" & covid_datos$Territorio != "Andalucía", ], aes(x = Fecha, y = Valor, color = Territorio)) + 
+    labs(title = "Confirmados por provincias", 
+       x = "Fecha", 
+       y = "Confirmados") + 
+    scale_color_manual(values=c('#25AAE2','#F2B53A', '#8BC540', '#DC5D42', '#666666', '9FAFBE', '#8B0000', '#FFFF00', '#FF0080', '#FFC0CB')) +
+    guides(colour = guide_legend(override.aes = list(size=10))) +
+    geom_smooth(size = 1, span = 4, se=FALSE) + 
+    theme(legend.key = element_rect(fill = "white"))
+
+
+```
+
+
+```{r }
+
+# Esta no tiene mucho sentido pero algo se sacará con ella en un futuro xd
+
+ggplot(covid_datos[covid_datos$Medida == "Confirmados PCR" & covid_datos$Territorio != "Andalucía", ], aes(x = Valor, y = Territorio, fill = Territorio)) +
+  geom_density_ridges() +
+    labs(title = "Precio vs. Corte",
+       x = "Precio", 
+       y = "Corte") +
+    scale_color_manual(values=c('#25AAE2','#F2B53A', '#8BC540', '#DC5D42', '#666666', '9FAFBE', '#8B0000', '#FFFF00', '#FF0080', '#FFC0CB'))
+
+
+```
+
+
