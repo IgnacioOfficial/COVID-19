@@ -75,12 +75,15 @@ confAndalucia <- covid_datos %>%
   filter(Medida == "Total confirmados (PCR+test)" & Territorio == "Andalucía") %>%
   arrange(Fecha) 
 
-ggplot(confAndalucia, aes(x=Fecha, y=Valor)) +
+confirmados <- ggplot(confAndalucia, aes(x=Fecha, y=Valor)) +
   geom_point() +
+  labs(subtitle="Ignacio Pascual") +
   geom_line(color='steelblue') +
   labs(title="Casos confirmados (PCR+test) en Andalucía", 
          y = "Confirmados", 
          x = "Fecha")
+
+confirmados
 
 ```
 
@@ -93,7 +96,8 @@ maxI <-  30 + max(confAndalucia$Valor)
 ggplot(confAndalucia, aes(Fecha, Valor)) +
   ylim(min = -20, max = maxI) +
   stat_density2d(geom="tile", aes(fill = ..density..), contour = FALSE) + 
-  geom_point(colour = "white")
+  geom_point(colour = "white") +
+  labs(title = "Defunciones en Andalucía", subtitle="Ignacio Pascual")
 
 ```
 
@@ -105,7 +109,8 @@ ggplot(confAndalucia, aes(Fecha, Valor)) +
 ggplot(confAndalucia, aes(x=Fecha, y=cumsum(Valor))) +
   geom_point() +
   geom_line(color='steelblue') +
-  labs(title="Casos confirmados (PCR+test) acumulados en Andalucía", 
+  labs(title="Casos confirmados (PCR+test) acumulados en Andalucía",
+       subtitle = "Ignacio Pascual",
          y = "Confirmados", 
          x = "Fecha")
   
@@ -129,7 +134,8 @@ covid_defunciones <- covid_datos %>%
 
 p1 <- ggplot(covid_defunciones, aes(x=Fecha)) + 
   ylim(min = 0, max = ymax) +
-  geom_line(aes(y = Valor), color = "darkred")
+  geom_line(aes(y = Valor), color = "darkred")+
+  labs(subtitle="Ignacio Pascual")
 
 # Gráfica de número de curados
 
@@ -158,10 +164,15 @@ covid_datos[covid_datos$Medida == "Defunciones", ] %>%
     geom_bar(stat="identity", fill="#f68060", alpha=.6, width=.4) +
     coord_flip() +
     xlab("") +
-    theme_bw()
+    theme_bw() +
+    labs(title = "Defunciones en Andalucía", subtitle="Ignacio Pascual")
 
 ```
 
+```
+
+
+----
 
 ```{r}
 

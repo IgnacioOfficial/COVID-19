@@ -67,6 +67,27 @@ annotate_figure(figure,
 
 ```
 
+```{r}
+
+ymax = 30 + max(covid_datos$Valor[covid_datos$Medida == "Defunciones"])
+
+ggplot(covid_datos[covid_datos$Medida == "Defunciones" & covid_datos$Territorio == "Andalucía", ], aes(Fecha, Valor)) +
+  ylim(min = 0, max = ymax) +
+  stat_density2d(geom="tile", aes(fill = ..density..), contour = FALSE) + 
+  geom_point(colour = "white")
+
+```
+
+```{r}
+
+covid_datos[covid_datos$Medida == "Defunciones", ] %>%
+  ggplot( aes(x=Territorio, y=Valor)) +
+    geom_bar(stat="identity", fill="#f68060", alpha=.6, width=.4) +
+    coord_flip() +
+    xlab("") +
+    theme_bw()
+
+```
 
 ```{r }
 
