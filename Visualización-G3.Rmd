@@ -169,11 +169,6 @@ covid_datos[covid_datos$Medida == "Defunciones", ] %>%
 
 ```
 
-```
-
-
-----
-
 ```{r}
 
 # Selecciono los datos que voy a representar
@@ -192,6 +187,7 @@ g1 <- ggplot(confirmadosPCR, aes(x = Fecha, y = Valor)) +
   geom_point(data = maximos) +
   geom_text(maximos, mapping = aes(label = Valor), hjust =-0.3, vjust = 0.3, angle = 60) +
   ylab("Confirmados por PCR") +
+  labs(subtitle="Andrés Suárez Mediavilla") +
   ggtitle("Comparativa positivos por provincia")
 g1
 
@@ -204,6 +200,7 @@ g2 <- ggplot(confirmadosPCR, aes(x = Fecha, y = Valor)) +
   geom_point(data = maximos) +
   geom_label(maximos, mapping = aes(label = Valor), hjust = -0.2, vjust = -0.1) +
   theme_light() +  
+  labs(subtitle="Andrés Suárez Mediavilla") +
   ggtitle("Graficos individuales de cada provincia")
 g2
 
@@ -234,6 +231,7 @@ g3 <- ggplot(curados_confirmados_PCR_Test, aes(x = Fecha, y = Valor))+
   scale_fill_manual(values = c("green", "darkblue")) +
   theme_minimal()+
   scale_color_manual(name = "Infectados-Curados", values = "red", label = "Balance")+
+  labs(subtitle="Andrés Suárez Mediavilla") +
   ggtitle("Gráfico comparativo infectados + curados y trazado de la media")
 g3
 
@@ -311,6 +309,7 @@ g4 <- ggplot(df, aes(x = "", y = Porcentaje, fill = Territorio)) +
   scale_fill_manual(values = colores) +
   theme_void()+
   geom_text(aes(label = Porcentaje), position = position_stack(vjust = 0.5))+
+  labs(subtitle="Andrés Suárez Mediavilla") +
   ggtitle("Porcentaje distribución de infectados en Andalucía")
 g4
 
