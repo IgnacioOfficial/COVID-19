@@ -1,0 +1,191 @@
+---
+title: "Visualización parte 2"
+author: "Ignacio Pascual"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+---
+
+# Mapa Mundi
+
+Para ejecutar todos estos pasos, primero debemos de tener los mapas en nuestro directorio y luego instalar el paquete:
+
+install_github("rOpenSpain/Siane")
+
+
+```{r}
+
+library(devtools)
+library(Siane)
+
+library(RColorBrewer)
+library(classInt)
+
+# Directorio de los mapas
+obj <- register_siane("C:/Users/ignac/OneDrive/Documentos/COVID19_LAB_R")
+
+# Mapa españa por provincias
+shp <- siane_map(obj = obj, level = "Provincias", canarias = FALSE, peninsula = "close")
+
+# raster::plot(shp)
+
+```
+
+# Preprocesamiento de datos
+
+```{r}
+
+covid_datos <- read.csv("Datasets/covid_datos.txt", sep=";", encoding = "UTF-8")
+
+# Se genera una ultima columna al finalizar cada linea con ';' por lo que la eliminamos
+covid_datos <- covid_datos[, 1:4]
+
+# Para evitar problemas con los acentos en las columnas cambiamos el nombre de la primera
+names(covid_datos)[1] <- "Fecha"
+
+covid_datos$Fecha <- as.Date(covid_datos$Fecha, format='%d/%m/%Y')
+
+# Los valores NA los convertimos a 0
+indices <- which(is.na(covid_datos$Valor))
+covid_datos$Valor[indices] = 0
+
+
+c1 <- covid_datos[covid_datos$Medida == "Curados", ]
+c1$Medida <- NULL
+names(c1)[3] = "Curados"
+
+c2 <- covid_datos[covid_datos$Medida == "Confirmados PCR", ]
+c2$Medida <- NULL
+names(c2)[3] = "Confirmados PCR"
+
+c3 <- covid_datos[covid_datos$Medida == "UCI", ]
+c3$Medida <- NULL
+names(c3)[3] = "UCI"
+
+c4 <- covid_datos[covid_datos$Medida == "Hospitalizados", ]
+c4$Medida <- NULL
+names(c4)[3] = "Hospitalizados"
+
+c5 <- covid_datos[covid_datos$Medida == "Defunciones", ]
+c5$Medida <- NULL
+names(c5)[3] = "Defunciones"
+
+c6 <- covid_datos[covid_datos$Medida == "Total confirmados (PCR+test)", ]
+c6$Medida <- NULL
+names(c6)[3] = "Total confirmados (PCR+test)"
+
+df <- Reduce(merge, list(c1, c2, c3, c4, c5, c6))
+
+df$codes[df$Territorio == "Andalucía"] <- "1"
+df$codes[df$Territorio == "Almería"] <- "04"
+df$codes[df$Territorio == "Cádiz"] <- "11"
+df$codes[df$Territorio == "Córdoba"] <- "14"
+df$codes[df$Territorio == "Granada"] <- "18"
+df$codes[df$Territorio == "Huelva"] <- "21"
+df$codes[df$Territorio == "Jaén"] <- "23"
+df$codes[df$Territorio == "Málaga"] <- "29"
+df$codes[df$Territorio == "Sevilla"] <- "41"
+
+df$codes <- as.factor(df$codes)
+
+levels(df$codes)
+
+p <- df
+p$Curados <- NULL
+p$`Confirmados PCR` <- NULL
+p$UCI <- NULL
+p$Hospitalizados <- NULL
+p$Defunciones <- NULL
+
+#Inicio Confinamiento
+p1 <- p[p$Fecha == as.Date("2020-03-16"), ]
+
+```
+
+Nuestro objetivo es realizar una escala de colores dependiendo del cuántos casos postivos se confirmaron el día que empezó el confinamiento:
+
+```{r}
+
+level <- "Provincias"
+canarias <- FALSE
+scale <- "6m" # "3m" also accepted
+
+shp <- siane_map(obj = obj, canarias = canarias, year = 2016, level = level, scale = scale)
+
+value <- "Total confirmados (PCR+test)"
+by <- "codes"
+
+shp_merged <- siane_merge(shp = shp, df = p1, by = by, value = value)
+
+#Plot the map
+
+#pallete_colour <- "BuPu"  # Escala de colores
+n <- 5
+style <- "kmeans"
+
+values_ine <- as.numeric(shp_merged@data[[value]])
+
+pallete_colour <- "OrRd" # Scale of oranges and reds
+colors <- brewer.pal(n, pallete_colour) # A pallete from RColorBrewer
+
+brks <- classIntervals(values_ine, n = n, style = style)
+
+my_pallete <- brks$brks
+
+
+col <- colors[findInterval(values_ine, my_pallete,
+                           all.inside=TRUE)] # Setting the final colors
+
+
+# Todo junto
+raster::plot(shp_merged,col = col) # Plot the map
+
+title_plot <- "Casos confirmados (PCR+tests) por provincias el 2020-03-16\n (Inicio Confinamiento)"
+
+title(main = title_plot)
+legend(legend = c("Menos que 12", "12-22", "23-27", "28-38", "Más que 39"), fill = colors,x = "bottomright")
+
+
+
+```
+
+A continuación, mostramos la misma gráfica pero con la fecha de inicio de la fase 0:
+
+```{r}
+
+# Inicio fase 0
+p2 <- p[p$Fecha == as.Date("2020-05-04"), ]
+
+# Inicio fase 1
+#p2 <- p[p$Fecha == as.Date("2020-05-11"), ]
+
+shp_merged2 <- siane_merge(shp = shp, df = p2, by = by, value = value)
+
+#Plot the map
+
+values_ine2 <- as.numeric(shp_merged2@data[[value]]) # Values we want to plot are stored in the shape@data data frame
+
+pallete_colour2 <- "PuBuGn" # Scale of oranges and reds
+colors2 <- brewer.pal(n, pallete_colour2) # A pallete from RColorBrewer
+
+brks2 <- classIntervals(values_ine2, n = n, style = style)
+
+my_pallete2 <- brks2$brks
+
+
+col2 <- colors2[findInterval(values_ine2, my_pallete2,
+                           all.inside=TRUE)] # Setting the final colors
+
+# Todo junto
+
+raster::plot(shp_merged2,col = col2) # Plot the map
+
+title_plot <- "Casos confirmados (PCR+tests) por provincias el 2020-05-04\n (Inicio Fase 0)"
+
+title(main = title_plot)
+legend(legend = c("Menos que 8", "8-14", "15-20", "21-60", "Más que 60"), fill = colors2,x = "bottomright")
+
+```
+
