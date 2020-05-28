@@ -1,0 +1,140 @@
+---
+title: "Regresión"
+author: "Grupo G3"
+date: "28/5/2020"
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+---
+
+# Procesamiento de los datos
+
+```{r warning=FALSE, message=FALSE}
+
+library(dplyr)
+library(ggplot2)
+library(magrittr)
+library(GGally)
+
+covid_datos <- read.csv("Datasets/covid_datos.txt", sep=";", encoding = "UTF-8")
+
+# Se genera una ultima columna al finalizar cada linea con ';' por lo que la eliminamos
+covid_datos <- covid_datos[, 1:4]
+
+# Para evitar problemas con los acentos en las columnas cambiamos el nombre de la primera
+names(covid_datos)[1] <- "Fecha"
+
+covid_datos$Fecha <- as.Date(covid_datos$Fecha, format='%d/%m/%Y')
+
+# Los valores NA los convertimos a 0
+indices <- which(is.na(covid_datos$Valor))
+covid_datos$Valor[indices] = 0
+
+
+```
+
+Para poder trabajar mejor con el dataset, hemos añadido una columna por cada una de las medidas del dataset. Nuestro objetivo con este cambio es visualizar tanto con la función str() como con summary() todos los cuartiles e información estadística importante sobre los valores del covid-19 en dichas medidas.
+
+```{r}
+
+c1 <- covid_datos[covid_datos$Medida == "Curados", ]
+c1$Medida <- NULL
+names(c1)[3] = "Curados"
+
+c2 <- covid_datos[covid_datos$Medida == "Confirmados PCR", ]
+c2$Medida <- NULL
+names(c2)[3] = "Confirmados PCR"
+
+c3 <- covid_datos[covid_datos$Medida == "UCI", ]
+c3$Medida <- NULL
+names(c3)[3] = "UCI"
+
+c4 <- covid_datos[covid_datos$Medida == "Hospitalizados", ]
+c4$Medida <- NULL
+names(c4)[3] = "Hospitalizados"
+
+c5 <- covid_datos[covid_datos$Medida == "Defunciones", ]
+c5$Medida <- NULL
+names(c5)[3] = "Defunciones"
+
+c6 <- covid_datos[covid_datos$Medida == "Total confirmados (PCR+test)", ]
+c6$Medida <- NULL
+names(c6)[3] = "Total confirmados (PCR+test)"
+
+covid_datos <- Reduce(merge, list(c1, c2, c3, c4, c5, c6))
+
+```
+
+# Análisis exploratorio
+
+Ahora, tenemos 8 columnas en nuestro dataset, siendo 6 de ellas de tipo numeric (Confirmados PCR, Curados, UCI, Hospitalizados, Defunciones, Total confirmados (PCR+test)), otra de tipo "Date" (Fecha) y otra de tipo factor (Territorio).
+
+```{r}
+
+str(covid_datos)
+
+```
+
+Observamos el número de filas y columnas:
+
+```{r}
+
+dim(covid_datos)
+
+```
+
+La función summary() muestra la media, mediana, cuartiles, valor mínimo y valor máximo, para variables cuantitativas y la frecuencia absoluta para variables cualitativas.
+
+Los cuartiles son valores que dividen una muestra de datos en cuatro partes iguales. Utilizando cuartiles puede evaluar rápidamente la dispersión y la tendencia central de un conjunto de datos, que son los pasos iniciales importantes para comprender sus datos.
+
+La manera más simple de medir la dispersión es identificar los valores mayor y menor de un conjunto de datos. La diferencia entre los valores mínimo y máximo se denomina el rango (o recorrido) de las observaciones.
+
+
+```{r}
+
+summary(covid_datos)
+
+```
+
+
+
+```{r fig.height=10, fig.width= 10}
+
+ggpairs(covid_datos)
+
+```
+
+De manera visual, podemos ver claramente que la variable Fecha y todas las demás tienen forma parabólica, por lo que suponemos que la regresión correcta para esta variable será el modelo cuadrática.
+
+Por otra parte, podemos apreciar que todas las demás siguen una relación lineal positiva entre ellas: esto significa que ambas variables aumentan o disminuyen simultáneamente a un ritmo constante.
+
+Esto tiene sentido, debido a que cuantos más fallecidos haya más positivos por tests habrá, por ejemplo.   Esto se puede explicar mejor xdd
+
+No observamos ninguna relación negativa indicando que dos variables están asociadas de forma inversa, esto es, valores altos de una de las variables se corresponden con valores bajos de la otra.
+
+A continuación, vamos a mostar algunas relaciones entre variables:
+   ?????
+
+```{r}
+
+covid_datos %>%
+  ggplot(aes(x=`Confirmados PCR`, y=Defunciones)) +
+  geom_point() +
+  stat_smooth()
+
+covid_datos %>%
+  ggplot(aes(x=UCI, y=Hospitalizados)) +
+  geom_point() +
+  stat_smooth()
+
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
