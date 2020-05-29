@@ -152,6 +152,118 @@ annotate_figure(figure, top = text_grob("Defunciones vs Curados",
 
 ```
 
+A continuación, vamos a procesar los datos de manera que se representaran gráficas de Andalucía ordenadas por días y meses. Con esto, pretendemos visualizar los efectos del tiempo sobre la pandemia y como evoluciona esta por meses.
+
+4. Gráficas Infectados en Andalucía por Covid-19 al día, separados en meses.
+
+```{r}
+
+TCFeb <- covid_datos[(format(covid_datos$Fecha, "%m") == '02') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Total confirmados (PCR+test)", ]
+
+TCMarzo <- covid_datos[(format(covid_datos$Fecha, "%m") == '03') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Total confirmados (PCR+test)", ]
+
+TCAbril <- covid_datos[(format(covid_datos$Fecha, "%m") == '04') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Total confirmados (PCR+test)", ]
+
+gf <- ggplot(TCFeb, aes(x=Fecha, y=Valor)) +
+  geom_point() +
+  geom_line(aes(group = 1)) +
+  labs(title = "Confirmados Febrero",
+       y = "Confirmados",
+       x = "Fecha")+
+  labs(subtitle="Juan Manuel Morales")
+
+gm <- ggplot(TCMarzo, aes(x=Fecha, y=Valor)) +
+  geom_point() +
+  geom_line(aes(group = 1)) +
+  labs(title = "Confirmados Marzo",
+       y = "Confirmados",
+       x = "Fecha")+
+  labs(subtitle="Juan Manuel Morales")
+
+ga <- ggplot(TCAbril, aes(x=Fecha, y=Valor)) +
+  geom_point() +
+  geom_line(aes(group = 1)) +
+  labs(title = "Confirmados Abril",
+       y = "Confirmados",
+       x = "Fecha")+
+  labs(subtitle="Juan Manuel Morales")
+
+figure2 <- ggarrange(gf,gm,ga)
+annotate_figure(figure2, top = text_grob("Confirmados Feb, Mar, Abril", face = "bold", size = 12))+
+  labs(subtitle = "Juan Manuel Morales")
+
+
+```
+ Podemos ver como a principios de la pandemia las gráficas tenían una tendencia positiva, donde el número de infectados crecía rápidamente por días. Sin embargo, en abril, ya se puede apreciar como algunos días el número de infectados es pequeño, creando así una gráfica llamada "de sierra".
+
+
+
+Confirmados totales por meses en Andalucía
+
+```{r}
+
+# Números Totales Confirmados por Meses
+
+sumF <- sum(TCFeb$Valor)
+
+sumM <- sum(TCMarzo$Valor)
+
+sumA <- sum(TCAbril$Valor)
+
+vMeses <- c(Febrero = sumF, Marzo = sumM, Abril = sumA)
+
+barplot(vMeses, col = c("red", "orange", "yellow"), main = "Confirmados Totales por meses", sub = "Juan Manuel Morales Joya")
+
+```
+
+Ante los datos presentes, podemos comprobar que el mes de Marzo fue el mes con más infectados de esta pandemia.
+
+
+Diferencias entre Hospitalizados Totales y los que están graves (UCI) por meses en Andalucía.
+
+```{r}
+
+hosAndF <- covid_datos[(format(covid_datos$Fecha, "%m") == '02') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Hospitalizados", ]
+
+sumhaF <- sum(hosAndF$Valor)
+
+UCIAndF <- covid_datos[(format(covid_datos$Fecha, "%m") == '02') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "UCI", ]
+
+sumUaF <- sum(UCIAndF$Valor)
+
+
+
+hosAndM <- covid_datos[(format(covid_datos$Fecha, "%m") == '03') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Hospitalizados", ]
+
+sumhaM <- sum(hosAndM$Valor)
+
+UCIAndM <- covid_datos[(format(covid_datos$Fecha, "%m") == '03') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "UCI", ]
+
+sumUaM <- sum(UCIAndM$Valor)
+
+
+
+hosAndA <- covid_datos[(format(covid_datos$Fecha, "%m") == '04') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Hospitalizados", ]
+
+sumhaA <- sum(hosAndA$Valor)
+
+UCIAndA <- covid_datos[(format(covid_datos$Fecha, "%m") == '04') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "UCI", ]
+
+sumUaA <- sum(UCIAndA$Valor)
+
+dat <- data.frame(
+  Fecha = factor(c("Febrero","Febrero", "Marzo", "Marzo", "Abril", "Abril"), levels = c("Febrero", "Marzo", "Abril")),
+  Tipo = c("Hospitalizado", "UCI"),
+  Valor = c(sumhaF,sumUaF,sumhaM, sumUaM, sumhaA, sumUaA)
+)
+
+ggplot() + 
+ geom_bar(data=dat,aes(x=Valor, y=Fecha,fill=Tipo), stat='identity', position='dodge') +
+ coord_flip()+labs(title = "Hospitalizados totales/Graves (UCI)", subtitle = "Juan Manuel Morales")
+
+```
+
+Respecto a esta gráfica, podemos concluir que el número de personas graves hospitalizadas es muy inferior al de infectados. Es decir, el virus afecta gravemente a una minoría de los infectados, al menos en los meses que nos muestra nuestro conjunto de datos.
 
 ## Por provincias
 
@@ -312,105 +424,5 @@ g4 <- ggplot(df, aes(x = "", y = Porcentaje, fill = Territorio)) +
   labs(subtitle="Andrés Suárez Mediavilla") +
   ggtitle("Porcentaje distribución de infectados en Andalucía")
 g4
-
-```
-
-
-Gráficas Infectados en Andalucía por Covid-19 al día, separados en meses.
-
-```{r}
-
-TCFeb <- covid_datos[(format(covid_datos$Fecha, "%m") == '02') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Total confirmados (PCR+test)", ]
-
-TCMarzo <- covid_datos[(format(covid_datos$Fecha, "%m") == '03') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Total confirmados (PCR+test)", ]
-
-TCAbril <- covid_datos[(format(covid_datos$Fecha, "%m") == '04') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Total confirmados (PCR+test)", ]
-
-gf <- ggplot(TCFeb, aes(x=Fecha, y=Valor)) +
-  geom_point() +
-  geom_line(aes(group = 1)) +
-  labs(title = "Confirmados Febrero",
-       y = "Confirmados",
-       x = "Fecha")
-
-gm <- ggplot(TCMarzo, aes(x=Fecha, y=Valor)) +
-  geom_point() +
-  geom_line(aes(group = 1)) +
-  labs(title = "Confirmados Marzo",
-       y = "Confirmados",
-       x = "Fecha")
-
-ga <- ggplot(TCAbril, aes(x=Fecha, y=Valor)) +
-  geom_point() +
-  geom_line(aes(group = 1)) +
-  labs(title = "Confirmados Abril",
-       y = "Confirmados",
-       x = "Fecha")
-
-figure2 <- ggarrange(gf,gm,ga)
-annotate_figure(figure2, top = text_grob("Confirmados Feb, Mar, Abril", face = "bold", size = 12))
-
-
-```
-
-Confirmados totales por meses en Andalucía
-
-```{r}
-
-# Números Totales Confirmados por Meses
-
-sumF <- sum(TCFeb$Valor)
-
-sumM <- sum(TCMarzo$Valor)
-
-sumA <- sum(TCAbril$Valor)
-
-vMeses <- c(Febrero = sumF, Marzo = sumM, Abril = sumA)
-
-barplot(vMeses, col = c("red", "orange", "yellow"))
-
-```
-
-Diferencias entre Hospitalizados Totales y los que están graves (UCI) por meses en Andalucía.
-
-```{r}
-
-hosAndF <- covid_datos[(format(covid_datos$Fecha, "%m") == '02') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Hospitalizados", ]
-
-sumhaF <- sum(hosAndF$Valor)
-
-UCIAndF <- covid_datos[(format(covid_datos$Fecha, "%m") == '02') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "UCI", ]
-
-sumUaF <- sum(UCIAndF$Valor)
-
-
-
-hosAndM <- covid_datos[(format(covid_datos$Fecha, "%m") == '03') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Hospitalizados", ]
-
-sumhaM <- sum(hosAndM$Valor)
-
-UCIAndM <- covid_datos[(format(covid_datos$Fecha, "%m") == '03') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "UCI", ]
-
-sumUaM <- sum(UCIAndM$Valor)
-
-
-
-hosAndA <- covid_datos[(format(covid_datos$Fecha, "%m") == '04') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Hospitalizados", ]
-
-sumhaA <- sum(hosAndA$Valor)
-
-UCIAndA <- covid_datos[(format(covid_datos$Fecha, "%m") == '04') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "UCI", ]
-
-sumUaA <- sum(UCIAndA$Valor)
-
-dat <- data.frame(
-  Fecha = factor(c("Febrero","Febrero", "Marzo", "Marzo", "Abril", "Abril"), levels = c("Febrero", "Marzo", "Abril")),
-  Tipo = c("Hospitalizado", "UCI"),
-  Valor = c(sumhaF,sumUaF,sumhaM, sumUaM, sumhaA, sumUaA)
-)
-
-ggplot() + 
- geom_bar(data=dat,aes(x=Valor, y=Fecha,fill=Tipo), stat='identity', position='dodge') +
- coord_flip()
 
 ```
