@@ -1,6 +1,6 @@
 ---
 title: "Visualización parte 2"
-author: "Ignacio Pascual"
+author: "Grupo G3 - Los panteras"
 date: "`r Sys.Date()`"
 output:
   prettydoc::html_pretty:
@@ -13,7 +13,6 @@ output:
 Para ejecutar todos estos pasos, primero debemos de tener los mapas en nuestro directorio y luego instalar el paquete:
 
 devtools::install_github("rOpenSpain/Siane")
-
 
 ```{r}
 library(devtools)
@@ -30,11 +29,11 @@ obj <- register_siane("C:/Users/ignac/OneDrive/Documentos/COVID19_LAB_R")
 
 # Andres:
 #obj <- register_siane("Z:/R_Workspace/COVID19_LAB_R/")
-# Mapa españa por provincias
 
+# Mapa españa por provincias
 shp <- siane_map(obj = obj, level = "Provincias", canarias = FALSE, peninsula = "close")
 
-# raster::plot(shp)
+raster::plot(shp)
 
 ```
 
@@ -137,7 +136,7 @@ colors <- brewer.pal(n, pallete_colour) # A pallete from RColorBrewer
 
 brks <- classIntervals(values_ine, n = n, style = style)
 
-my_pallete <- brks$brks
+my_pallete <- brks$brksa
 
 
 col <- colors[findInterval(values_ine, my_pallete,
@@ -149,7 +148,7 @@ raster::plot(shp_merged,col = col) # Plot the map
 
 title_plot <- "Casos confirmados (PCR+tests) por provincias el 2020-03-16\n (Inicio Confinamiento)"
 
-title(main = title_plot)
+title(main = title_plot, sub="Ignacio Pascual")
 legend(legend = c("Menos que 12", "12-22", "23-27", "28-38", "Más que 39"), fill = colors,x = "bottomright")
 
 
@@ -189,7 +188,7 @@ raster::plot(shp_merged2,col = col2) # Plot the map
 
 title_plot <- "Casos confirmados (PCR+tests) por provincias el 2020-05-04\n (Inicio Fase 0)"
 
-title(main = title_plot)
+title(main = title_plot, sub="Ignacio Pascual Gutiérrez")
 legend(legend = c("Menos que 8", "8-14", "15-20", "21-60", "Más que 60"), fill = colors2,x = "bottomright")
 
 ```

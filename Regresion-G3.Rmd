@@ -1,6 +1,6 @@
 ---
 title: "Regresión"
-author: "Grupo G3"
+author: "Grupo G3 - Los panteras"
 date: "28/5/2020"
 output:
   prettydoc::html_pretty:
