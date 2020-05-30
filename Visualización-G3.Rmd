@@ -1,12 +1,18 @@
 ---
 title: "Visualización"
 author: "Grupo G3 - Los panteras"
-date: "11/5/2020"
+date: "`r Sys.Date()`"
 output:
   prettydoc::html_pretty:
-    theme: architect
+    theme: tactile
     highlight: github
 ---
+
+Para este proyecto hemos utilizado el dataset oficial dado por la Junta de Andalucía:
+
+https://www.juntadeandalucia.es/institutodeestadisticaycartografia/badea/operaciones/consulta/anual/39409?CodOper=b3_2314&codConsulta=39409
+
+Todo el análisis se ha realizado de manera autónoma (sin basarnos en ningún rmarkdown ya existente) y basándonos en lo explicado en clase y en diversas páginas de internet.
 
 # Procesamiento de los datos
 
@@ -62,7 +68,7 @@ levels(covid_datos$Medida)
 - Valor: Campo de tipo 'numeric', que devuelve el valor de cada una de las medidas anteriormente expuestas.
 
 # Gráficas
-
+<br>< /br>
 ## Andalucía
 
 Una vez hecho el preprocesamiento y descrito nuestro dataset, exponemos unas gráficas representativas acerca de la situación del covid-19 en Andalucía y todas sus provincias.
