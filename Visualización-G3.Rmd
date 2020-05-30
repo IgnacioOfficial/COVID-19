@@ -170,6 +170,8 @@ TCMarzo <- covid_datos[(format(covid_datos$Fecha, "%m") == '03') & covid_datos$T
 
 TCAbril <- covid_datos[(format(covid_datos$Fecha, "%m") == '04') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Total confirmados (PCR+test)", ]
 
+TCMayo <- covid_datos[(format(covid_datos$Fecha, "%m") == '05') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Total confirmados (PCR+test)", ]
+
 gf <- ggplot(TCFeb, aes(x=Fecha, y=Valor)) +
   geom_point() +
   geom_line(aes(group = 1)) +
@@ -194,8 +196,16 @@ ga <- ggplot(TCAbril, aes(x=Fecha, y=Valor)) +
        x = "Fecha")+
   labs(subtitle="Juan Manuel Morales")
 
-figure2 <- ggarrange(gf,gm,ga)
-annotate_figure(figure2, top = text_grob("Confirmados Feb, Mar, Abril", face = "bold", size = 12))+
+gm <- ggplot(TCMayo, aes(x=Fecha, y=Valor)) +
+  geom_point() +
+  geom_line(aes(group = 1)) +
+  labs(title = "Confirmados Mayo",
+       y = "Confirmados",
+       x = "Fecha")+
+  labs(subtitle="Juan Manuel Morales")
+
+figure2 <- ggarrange(gf,gm,ga, gm)
+annotate_figure(figure2, top = text_grob("Confirmados Feb, Mar, Abril, Mayo", face = "bold", size = 12))+
   labs(subtitle = "Juan Manuel Morales")
 
 
@@ -216,9 +226,11 @@ sumM <- sum(TCMarzo$Valor)
 
 sumA <- sum(TCAbril$Valor)
 
-vMeses <- c(Febrero = sumF, Marzo = sumM, Abril = sumA)
+sumMy <- sum(TCMayo$Valor)
 
-barplot(vMeses, col = c("red", "orange", "yellow"), main = "Confirmados Totales por meses", sub = "Juan Manuel Morales Joya")
+vMeses <- c(Febrero = sumF, Marzo = sumM, Abril = sumA, Mayo = sumMy)
+
+barplot(vMeses, col = c("red", "orange", "yellow", "green"), main = "Confirmados Totales por meses", sub = "Juan Manuel Morales Joya")
 
 ```
 
@@ -257,10 +269,18 @@ UCIAndA <- covid_datos[(format(covid_datos$Fecha, "%m") == '04') & covid_datos$T
 
 sumUaA <- sum(UCIAndA$Valor)
 
+hosAndMy <- covid_datos[(format(covid_datos$Fecha, "%m") == '05') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Hospitalizados", ]
+
+sumhaMy <- sum(hosAndMy$Valor)
+
+UCIAndMy <- covid_datos[(format(covid_datos$Fecha, "%m") == '05') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "UCI", ]
+
+sumUaMy <- sum(UCIAndMy$Valor)
+
 dat <- data.frame(
-  Fecha = factor(c("Febrero","Febrero", "Marzo", "Marzo", "Abril", "Abril"), levels = c("Febrero", "Marzo", "Abril")),
+  Fecha = factor(c("Febrero","Febrero", "Marzo", "Marzo", "Abril", "Abril", "Mayo", "Mayo"), levels = c("Febrero", "Marzo", "Abril", "Mayo")),
   Tipo = c("Hospitalizado", "UCI"),
-  Valor = c(sumhaF,sumUaF,sumhaM, sumUaM, sumhaA, sumUaA)
+  Valor = c(sumhaF,sumUaF,sumhaM, sumUaM, sumhaA, sumUaA, sumhaMy, sumUaMy)
 )
 
 ggplot() + 
