@@ -220,7 +220,7 @@ sumM <- sum(TCMarzo$Valor)
 
 sumA <- sum(TCAbril$Valor)
 
-sumMy <- sum(TCMayo$valor)
+sumMy <- sum(TCMayo$Valor)
 
 vMeses <- c(Febrero = sumF, Marzo = sumM, Abril = sumA, Mayo = sumMy)
 
@@ -265,11 +265,11 @@ sumUaA <- sum(UCIAndA$Valor)
 
 hosAndMy <- covid_datos[(format(covid_datos$Fecha, "%m") == '05') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "Hospitalizados", ]
 
-sumhaMy <- sum(hosAndA$Valor)
+sumhaMy <- sum(hosAndMy$Valor)
 
 UCIAndMy <- covid_datos[(format(covid_datos$Fecha, "%m") == '05') & covid_datos$Territorio == "Andalucía" & covid_datos$Medida == "UCI", ]
 
-sumUaMy <- sum(UCIAndA$Valor)
+sumUaMy <- sum(UCIAndMy$Valor)
 
 dat <- data.frame(
   Fecha = factor(c("Febrero","Febrero", "Marzo", "Marzo", "Abril", "Abril", "Mayo", "Mayo"), levels = c("Febrero", "Marzo", "Abril", "Mayo")),
