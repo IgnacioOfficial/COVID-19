@@ -12,7 +12,7 @@ output:
 
 Para ejecutar todos estos pasos, primero debemos de tener los mapas en nuestro directorio y luego instalar el paquete:
 
-install_github("rOpenSpain/Siane")
+devtools::install_github("rOpenSpain/Siane")
 
 
 ```{r}
@@ -25,7 +25,7 @@ library(classInt)
 # Directorio de los mapas
 # Hay que especificarle el directorio completo y descomprimir los zip del repositorio
 # Ignacio:
-#obj <- register_siane("C:/Users/ignac/OneDrive/Documentos/COVID19_LAB_R")
+obj <- register_siane("C:/Users/ignac/OneDrive/Documentos/COVID19_LAB_R")
 # Andres:
 #obj <- register_siane("Z:/R_Workspace/COVID19_LAB_R/")
 # Mapa españa por provincias
