@@ -113,12 +113,13 @@ De manera visual, podemos ver claramente que la variable Fecha y todas las demá
 
 Por otra parte, podemos apreciar que todas las demás siguen una relación lineal positiva entre ellas: esto significa que ambas variables aumentan o disminuyen simultáneamente a un ritmo constante.
 
-Esto tiene sentido, debido a que cuantos más fallecidos haya más positivos por tests habrá, por ejemplo.   Esto se puede explicar mejor xdd
+Esto tiene sentido, debido a que cuantos más fallecidos haya más positivos por tests habrá, por ejemplo.   
+
+Para revisión -> Esto se puede explicar mejor
 
 No observamos ninguna relación negativa indicando que dos variables están asociadas de forma inversa, esto es, valores altos de una de las variables se corresponden con valores bajos de la otra.
 
 A continuación, vamos a mostar algunas relaciones entre variables:
-   ?????
 
 ```{r}
 
@@ -134,11 +135,5 @@ covid_datos %>%
 
 ```
 
-
-```{r}
-```
-
-
-```{r}
-```
+Aún queda bastante de regresión, sólo está empezado...
 
