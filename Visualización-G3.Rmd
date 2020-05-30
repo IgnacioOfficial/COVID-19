@@ -282,7 +282,6 @@ covid_datos[covid_datos$Medida == "Defunciones", ] %>%
 ```
 
 ```{r}
-
 # Selecciono los datos que voy a representar
 confirmadosPCR <- filter(covid_datos, Medida == "Confirmados PCR", Territorio != "Andalucía")
 
@@ -302,7 +301,9 @@ g1 <- ggplot(confirmadosPCR, aes(x = Fecha, y = Valor)) +
   labs(subtitle="Andrés Suárez Mediavilla") +
   ggtitle("Comparativa positivos por provincia")
 g1
+```
 
+```{r}
 # Grid con los graficos individuales de provincias
 g2 <- ggplot(confirmadosPCR, aes(x = Fecha, y = Valor)) +
   geom_line() +
@@ -316,7 +317,10 @@ g2 <- ggplot(confirmadosPCR, aes(x = Fecha, y = Valor)) +
   ggtitle("Graficos individuales de cada provincia")
 g2
 
-## Seguindo tipo
+```
+
+```{r}
+## Segundo tipo
 # Representacion del total de infectados y el total de curados en Andalucia
 
 curados_confirmados_PCR_Test <- covid_datos %>% 
@@ -346,7 +350,9 @@ g3 <- ggplot(curados_confirmados_PCR_Test, aes(x = Fecha, y = Valor))+
   labs(subtitle="Andrés Suárez Mediavilla") +
   ggtitle("Gráfico comparativo infectados + curados y trazado de la media")
 g3
+```
 
+```{r}
 # Otro grafico viendo el porcentaje acumulado por provincia
 # Incidencias acumuladas
 confirmados_PCR_Test <- covid_datos %>%
