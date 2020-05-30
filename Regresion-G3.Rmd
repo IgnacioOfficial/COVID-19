@@ -101,7 +101,7 @@ summary(covid_datos)
 
 ```{r fig.height=10, fig.width= 10}
 
-ggpairs(covid_datos)
+ggpairs(covid_datos)[4,2]
 
 ```
 

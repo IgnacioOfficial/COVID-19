@@ -113,9 +113,9 @@ ggplot(confAndalucia, aes(x=Fecha, y=cumsum(Valor))) +
        subtitle = "Ignacio Pascual",
          y = "Confirmados", 
          x = "Fecha")
-  
 
 ```
+
 
 Podemos observar que desde mediados de marzo hasta princios de abril, la línea de puntos crece mucho más rápido. Posteriormente, y tras unas semanas de confinamiento podemos apreciar como la línea de puntos deja de ser tan vertical, indicando que sigue creciendo pero de forma más lenta.
 
@@ -194,11 +194,11 @@ annotate_figure(figure2, top = text_grob("Confirmados Feb, Mar, Abril", face = "
 
 
 ```
- Podemos ver como a principios de la pandemia las gráficas tenían una tendencia positiva, donde el número de infectados crecía rápidamente por días. Sin embargo, en abril, ya se puede apreciar como algunos días el número de infectados es pequeño, creando así una gráfica llamada "de sierra".
+
+Podemos ver como a principios de la pandemia las gráficas tenían una tendencia positiva, donde el número de infectados crecía rápidamente por días. Sin embargo, en abril, ya se puede apreciar como algunos días el número de infectados es pequeño, creando así una gráfica llamada "de sierra".
 
 
-
-Confirmados totales por meses en Andalucía
+5. Confirmados totales por meses en Andalucía
 
 ```{r}
 
@@ -219,7 +219,7 @@ barplot(vMeses, col = c("red", "orange", "yellow"), main = "Confirmados Totales 
 Ante los datos presentes, podemos comprobar que el mes de Marzo fue el mes con más infectados de esta pandemia.
 
 
-Diferencias entre Hospitalizados Totales y los que están graves (UCI) por meses en Andalucía.
+6. Diferencias entre Hospitalizados Totales y los que están graves (UCI) por meses en Andalucía.
 
 ```{r}
 
@@ -267,7 +267,7 @@ Respecto a esta gráfica, podemos concluir que el número de personas graves hos
 
 ## Por provincias
 
-4. En esta gráfica de barras podemos ver los fallecidos por cada provincia y, además, Andalucía.
+7. En esta gráfica de barras podemos ver los fallecidos por cada provincia y, además, Andalucía.
 
 ```{r}
 
@@ -280,6 +280,8 @@ covid_datos[covid_datos$Medida == "Defunciones", ] %>%
     labs(title = "Defunciones en Andalucía", subtitle="Ignacio Pascual")
 
 ```
+
+8. Comparativa positivos por provincia.
 
 ```{r}
 # Selecciono los datos que voy a representar
@@ -319,6 +321,8 @@ g2
 
 ```
 
+9. Gráfico comparativo infectados + curados y trazado de la media.
+
 ```{r}
 ## Segundo tipo
 # Representacion del total de infectados y el total de curados en Andalucia
@@ -351,6 +355,8 @@ g3 <- ggplot(curados_confirmados_PCR_Test, aes(x = Fecha, y = Valor))+
   ggtitle("Gráfico comparativo infectados + curados y trazado de la media")
 g3
 ```
+
+10. Porcentaje distribución de infectados por provincias.
 
 ```{r}
 # Otro grafico viendo el porcentaje acumulado por provincia
