@@ -125,18 +125,17 @@ shp_merged <- siane_merge(shp = shp, df = p1, by = by, value = value)
 
 #Plot the map
 
-#pallete_colour <- "BuPu"  # Escala de colores
+pallete_colour <- "YlOrRd"  # Escala de colores
 n <- 5
 style <- "kmeans"
 
 values_ine <- as.numeric(shp_merged@data[[value]])
 
-pallete_colour <- "OrRd" # Scale of oranges and reds
 colors <- brewer.pal(n, pallete_colour) # A pallete from RColorBrewer
 
 brks <- classIntervals(values_ine, n = n, style = style)
 
-my_pallete <- brks$brksa
+my_pallete <- brks$brks
 
 
 col <- colors[findInterval(values_ine, my_pallete,
