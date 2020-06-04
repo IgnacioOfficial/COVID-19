@@ -16,6 +16,8 @@ library(dplyr)
 library(ggplot2)
 library(magrittr)
 library(GGally)
+library(tidyr)
+
 
 covid_datos <- read.csv("Datasets/covid_datos.txt", sep=";", encoding = "UTF-8")
 
@@ -36,7 +38,7 @@ covid_datos$Valor[indices] = 0
 
 Para poder trabajar mejor con el dataset, hemos añadido una columna por cada una de las medidas del dataset. Nuestro objetivo con este cambio es visualizar tanto con la función str() como con summary() todos los cuartiles e información estadística importante sobre los valores del covid-19 en dichas medidas.
 
-```{r}
+```{r eval = FALSE}
 
 c1 <- covid_datos[covid_datos$Medida == "Curados", ]
 c1$Medida <- NULL
@@ -70,22 +72,34 @@ covid_datos <- covid_datos[,-2] # Quitamos territorio que es tipo factor para re
 
 ```
 
+```{r}
+# Hare uso de la funcion spread del paquete tidyr, para poder separar las filas de la columna Medida en varias columnas, y usando el valor de estas como value de la columna
+covid_datos2 <- covid_datos %>% spread(key = Medida, value = Valor) %>% arrange(Territorio, desc(Fecha))
+head(covid_datos2)
+```
+
+Una vez tenemos preparado el dataset, vamos a centrarnos en el analisis de Andalucía, por lo que hacemos un filtrado del dataset
+
+```{r}
+andalucia <- covid_datos2 %>% filter(Territorio == "Andalucía") %>% select(-Territorio)
+```
+
 # Análisis exploratorio
 
 Ahora, tenemos 8 columnas en nuestro dataset, siendo 6 de ellas de tipo numeric (Confirmados PCR, Curados, UCI, Hospitalizados, Defunciones, Total confirmados (PCR+test)), otra de tipo "Date" (Fecha) y otra de tipo factor (Territorio).
 
+La variable Andalucia creada adicionalmente, no posee la columna territorio pues se repetiria para cada fila.
+
 ```{r}
+str(covid_datos2)
 
-str(covid_datos)
-
+str(andalucia)
 ```
 
 Observamos el número de filas y columnas:
 
 ```{r}
-
-dim(covid_datos)
-
+dim(andalucia)
 ```
 
 La función summary() muestra la media, mediana, cuartiles, valor mínimo y valor máximo, para variables cuantitativas y la frecuencia absoluta para variables cualitativas.
@@ -96,44 +110,102 @@ La manera más simple de medir la dispersión es identificar los valores mayor y
 
 
 ```{r}
+summary(covid_datos2)
 
-summary(covid_datos)
-
+summary(andalucia)
 ```
 
+Realizando un plot de los datos filtrados, podemos observar las relaciones entre las variables para poder establecer algun estudio de interes.
 
+```{r}
+plot(andalucia)
+```
+
+Una vez analizadas las graficas, podemos ver que en casi todas, cuando la variable Fecha esta implicada, las demas variables presentan un comportamiento similar, formando una campana de Gauss. Esto es lo esperado, pues a medida que avanzan los dias, se alcanza el pico de infectados, defunciones, etc, y posteriormente comienza la relajacion de la grafica de manera suave.
+
+
+Ejecutando un ggpairs de Andalucia podemos observar facilmente relaciones existentes en los datos
 
 ```{r fig.height=10, fig.width= 10}
 
-ggpairs(covid_datos)
+ggpairs(andalucia, progress = FALSE)
 
 ```
 
-De manera visual, podemos ver claramente que la variable Fecha y todas las demás tienen forma parabólica, por lo que suponemos que la regresión correcta para esta variable será el modelo cuadrática.
+Como habiamos mencionado previamente, cuando las variable Fecha interviene, se generan campanas de Gauss para cada variable.
 
 Por otra parte, podemos apreciar que todas las demás siguen una relación lineal positiva entre ellas: esto significa que ambas variables aumentan o disminuyen simultáneamente a un ritmo constante.
 
-Esto tiene sentido, debido a que cuantos más fallecidos haya más positivos por tests habrá, por ejemplo.   
+Esto tiene sentido, debido a que cuantos más positivos por PCR haya, mayor seran el numero de hospitalizaciones, ingresos en UCI, etc. Y a mayores ingresos en hospitales, el numero de curados y el numero de defunciones tambien se veran afectados.
 
-Para revisión -> Esto se puede explicar mejor
-
-No observamos ninguna relación negativa indicando que dos variables están asociadas de forma inversa, esto es, valores altos de una de las variables se corresponden con valores bajos de la otra.
-
+No encontramos relaciones inversas o negativas entre las variables.
 A continuación, vamos a mostar algunas relaciones entre variables:
 
 ```{r}
 
-covid_datos %>%
+covid_datos2 %>%
   ggplot(aes(x=`Confirmados PCR`, y=Defunciones)) +
   geom_point() +
   stat_smooth()
 
-covid_datos %>%
+covid_datos2 %>%
   ggplot(aes(x=UCI, y=Hospitalizados)) +
   geom_point() +
   stat_smooth()
 
 ```
 
-Aún queda bastante de regresión, sólo está empezado...
+# Modelos Lineales
+
+Podemos aplicar las tecnicas vistas en clase para tener un mayor entendimiento de los datos
+
+¿Hay efecto entre los contagios y los ingresos hospitalarios?
+
+A simple vista podriamos afirmarlo, pero siempre hay que corroborar los datos.
+
+```{r}
+# Realizamos modelo de regresion ingresos-contagios
+ingresos_contagios <- lm(Hospitalizados ~ `Confirmados PCR`, data = covid_datos2)
+ingresos_contagios
+# El modelo es -0.7797 (corte con el eje Y), 0.5166 (Los ingresos se incrementan en este porcentaje) 
+```
+
+Hospitalizaciones = 0.7797 + 0.5166 * Confirmados_PCR
+
+```{r}
+# Ejecutar a la vez
+plot(covid_datos2$`Confirmados PCR`, covid_datos2$Hospitalizados)
+abline(ingresos_contagios)
+
+# Usando ggplot
+p <- covid_datos2 %>% 
+    ggplot(aes(x = `Confirmados PCR`, y = Hospitalizados)) +
+    geom_point() +
+    stat_smooth(method = lm)
+p 
+```
+
+```{r}
+summary(ingresos_contagios)
+```
+
+* La informacion de los residuos nos indica la calidad del ajuste realizado, como se ajusta nuestro modelo a los datos del dataset 
+* Analizando el resumen de ingresos_contagios, podemos ver que el valor de R2 es 0.9682, siendo un ajuste bastante cercano a 1, por lo que podriamos concluir que es un buen ajuste. 96.82% de la variabilidad de Hospitalizados viene reflejada por la variable Confirmados PCR.
+* Observamos 723 grados de libertad posibles para estimar la variabilidad de los parametros y fiabilidad del ajuste.
+* F-stadistico = 2.203e+04 -->  Alejado de 1 indica buen ajuste
+* p-value: < 2.2e-16 --> Al ser un valor tan bajo rechazamos H0 aceptando H1, es decir, que si hay modelo.
+
+***
+
+**Realizando plot del modelo**
+
+```{r}
+plot(ingresos_contagios)
+```
+
+* 1.- Residuos linealmente distribuidos, cerca del y = 0.
+* 2.- Residuos están practicamente distribuidos siguiendo una normal, la y = x. Tambien me detecta outliers, valores importantes usando la distancia de Cook. Pese a que los residuos se distribuyen en una especie de S, la mayoria se concentra siguiendo la normal.
+* 3.- Residuos están distribuidos aleatoriamente - mucha dispersión de los errores. Aunque hay valores concentrados, no es observable ningun patron en concreto.
+* 4.- Vemos los calculos de la distancia de Cook. Nos indica que puntos tienen mayor influencia en la regresion.
+
 
