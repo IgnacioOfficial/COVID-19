@@ -203,9 +203,77 @@ summary(ingresos_contagios)
 plot(ingresos_contagios)
 ```
 
-* 1.- Residuos linealmente distribuidos, cerca del y = 0.
-* 2.- Residuos están practicamente distribuidos siguiendo una normal, la y = x. Tambien me detecta outliers, valores importantes usando la distancia de Cook. Pese a que los residuos se distribuyen en una especie de S, la mayoria se concentra siguiendo la normal.
-* 3.- Residuos están distribuidos aleatoriamente - mucha dispersión de los errores. Aunque hay valores concentrados, no es observable ningun patron en concreto.
-* 4.- Vemos los calculos de la distancia de Cook. Nos indica que puntos tienen mayor influencia en la regresion.
+* 1.-Residuals vs Fitted: representa los errores respecto los valores ajustados. Si la linea roja se acerca bastante al y=0 se podría apreciar que los errores serían bastante simétricos y que los residuos estarían linealmente distribuidos. Podría ser buen modelo.
+`EN NUESTRO CASO:` Los residuos linealmente distribuidos, cerca del y = 0.
+* 2.- Normal Q-Q: Gráfico Q-Q plot, compara mi modelo con una distribución normal. si mi modelo se acerca a la linea discontinua y=x, significa que mi modelo es muy bueno.Si los errores estan distribuidos normalmente debe dar una linea recta. Detecta outliers que se desvian de la recta y valores importantes.
+`EN NUESTRO CASO:` Los residuos están practicamente distribuidos siguiendo una normal, la y = x. Tambien me detecta outliers, valores importantes usando la distancia de Cook. Pese a que los residuos se distribuyen en una especie de S, la mayoria se concentra siguiendo la normal.
+* 3.- Scale-Location: Compara los valores ajustados con la raiz cuadrada de los residuos estandarizados. Residuos están distribuidos aleatoriamente o concentrado?, hay mucha dispersion de los errores (si fuera curva V los residuos no estarian distribuidos aleratoriamente).
+`EN NUESTRO CASO:` Los residuos están distribuidos aleatoriamente - mucha dispersión de los errores. Aunque hay valores concentrados, no es observable ningun patron en concreto.
+* 4.- Residuals vs Leverage: calcula los outliers y los valores importantes a partir de la distancia de Cook.
+`EN NUESTRO CASO:` Vemos los calculos de la distancia de Cook. Nos indica que puntos tienen mayor influencia en la regresion.
 
+## Modelo lineal parabólico
+
+¿Representaría mejor los datos anteriormente mostrados un modelo parabólico? A simple vista, podemos ver que un modelo lineal representa bastante bien los datos, además hemos obtenido un $R^2$ bastante alto. No obstante, podemos probar con un modelo parabólico y visualizar cómo se ajustan los datos para este modelo.
+
+```{r}
+ic_parab <- lm(Hospitalizados~ `Confirmados PCR`+I(`Confirmados PCR`^2), data = covid_datos2)
+ic_parab
+# El modelo es Hospitalizados = -7.799e-02 + 4.799e-01*ConfirPCR + 7.375e-05*ConfirPCR^2 
+```
+
+
+Una representación de los datos y el modelo sería:
+
+```{r}
+covid_datos2 %>%
+  ggplot(aes(x=`Confirmados PCR`+I(`Confirmados PCR`^2), y=Hospitalizados))+
+  geom_point()+
+  stat_smooth(method = lm) 
+```
+
+Estudiaremos sus datos estadísticos y los analizaremos mediante:
+
+```{r}
+summary(ic_parab)
+```
+
+Analizaremos los datos:
+
+Residuos: da información del modelo respecto a la dispersión de este. Para ser buen modelo debe estar.
+Deben tener un promedio de cero. Los errores deben estar distribuidos uniformemente.
+`EN NUESTRO CASO:` Los residuos tienen un promedio casi de cero por lo que podríamos presentarnos ante un buen modelo ante este indicador. En cuanto a la uniformidad de los errores vemos como su min (-31.778) y su max (64.474) indican algo de dispersión, aunque no significativamente. Comparando con el modelo lineal anterior, estos residuos están uniformemente mejores distribuídos. Además, el promedio está más cerca de 0.
+
+Para el intercept y pendiente (slop): R compara sus términos con un modelo donde estos terminos son nulos, por lo que podemos ver la importancia de estos terminos y ver de los contrastes de hipotesis los términos t-value y Pr(>|t|) para explicar los resultados.
+`EN NUESTRO CASO:` Vemos que nuestro intercept (punto de corte con eje y) no es significativo, al igual que en el modelo lineal anterior. Sin embargo, tenemos un signo bastante significativo para la comparativa entre modelos que estamos ejecutando. Esto es que, nos dicen que el término cuadrático de este modelo es muy significativo (***), por lo que este indicador podría decirnos que este modelo es mejor que el lineal anterior y que el término cuadrado es importante.
+
+$R^2$ y $R^2$-Ajustado: 
+
+El $R^2$ representa qué porcentaje de los valores de salida quedan representados por los valores del modelo. Si es cercano a 1 indica que la regresíon ha explicado una gran proporción de la variabilidad en la salida. Un valor cercano a cero indica que el modelo es incorrecto o que el error es alto.
+`EN NUESTRO CASO:` Tenemos un valor muy cercano a 1 (0.9692). Por lo que podemos afirmar que este modelo es muy bueno. en comparación con el modelo anterior (0.9682). Vemos que este modelo es minimamente mejor.
+
+El valor de $R^2$-Ajustado indica el ajuste de $R^2$ respecto a los predictores usados. Si su valor es muy diferente al $R^2$ indica que el modelo está sobrecargado (overfitting).
+`EN NUESTRO CASO:` Vemos que los valores son próximos por lo que no hay overfitting, es decir, el modelo no está sobrecargado.
+
+**¿Hay modelo?**
+
+F-estadístico: Si está muy cerca de 1, no hay relaciones de dependencia y no hay modelo (se acepta hipótesis nula). Si es superior a 1 se acepta la hipotesis alternativa.
+`EN NUESTRO CASO:` Vemos como el F-Stadistico es muy superior a 1 por lo que aceptamos la hipótesis alternativa y afirmamos que el modelo es válido.
+
+P-value: probabilidad de aceptar h1 como cierta y que sea falso. Si es menor al nivel de significación de Fisher rechazas H0, es decir, habría una relación de dependencia entre una variable del dataset y la variable de salida.
+`EN NUESTRO CASO:` Vemos como el indice es muy inferior al nivel de significación de Fisher. Por lo que rechazamos la hipótesis nula y afirmamos que al menos una variable del dataset depende de la variable de salida.
+
+
+**Plot del modelo**
+
+```{r}
+plot(ic_parab)
+```
+
+Vemos como los datos son  muy parecidos en relación al modelo lineal expuesto anteriormente. Algo destacable sería la primera gráfica `Residuals vs Fitted` ya que vemos como en este caso, la línea se separa un poco más en comparación con la mostrada para el anterior modelo. Por lo que podemos decir, que los errores son menos simétricos en este modelo parabólico.
+
+
+`Conclusión: ` Podemos ver como tanto el primer modelo lineal como el modelo parabólico representan muy bien los datos. Ambos dan un valor bastante alto del indicador $R^2$ y por tanto cualquiera de los dos modelos serían muy buenos representantes de este conjunto de datos. Por un lado, el modelo lineal primero es más sencillo de crear y de representar, y comparándolo con la mímina mejora que aportaría el parabólico, es posible que la mejor opción sea quedarse con el modelo lineal para simplificar los datos. Por otro lado, hemos visto que el término cuadrático es muy importante en su modelo, por lo que si nos quedamos con el modelo parabólico también sería muy buena opción. 
+
+Personalmente, nosotros nos decantaríamos por el primer modelo lineal, ya que vemos que se ajusta muy bien a los datos, su indice de acierto es muy alto y la mejora que aporta el modelo parabólico es mínima en comparación con lo que complicaría el modelo en cuanto a calculos se refiere.
 
