@@ -12,7 +12,7 @@ output:
 
 ### Pre-procesamiento
 
-```{r warning=FALSE}
+```{r warning=FALSE, message=""}
 
 library(arules)
 library(arulesViz)
@@ -24,16 +24,16 @@ library(readr)
 
 ```{r}
 
-sick_patients <- read_csv("sick_patients.csv")
+sick_patients <- read_csv("Datasets/sick_patients.csv")
 
 # Cargamos en una nueva variable las columnas a estudiar:
 
 sick_patients2 <- sick_patients[, 2:20]
 
-# preprocesamos el dataset para buscar las reglas:
+# Preprocesamos el dataset para buscar las reglas:
 
 # convertimos a factor de dos niveles (0,1) -> TRUE OR FALSE todas las columnas.
-sick_patients2[] <- lapply( sick_patients2, factor)
+sick_patients2[] <- lapply(sick_patients2, factor)
 col_names <- names(sick_patients2)
 sick_patients2[col_names] <- lapply(sick_patients2[col_names] , factor)
 
@@ -47,6 +47,47 @@ dim(sick_patients2)
 ```
 
 ### Reglas de Asociación
+
+Se realiza el método a priori de reglas de asociación, con 10% como mínimo de soporte de un itemset.
+
+```{r}
+
+i_sick <- apriori(sick_patients2,
+              parameter = list(support = 0.1, target = "frequent"),
+              control = list(verbose = FALSE))
+
+# Se ordenan las reglas por el valor del soporte
+i_sick <- sort(i_sick, by = "support") 
+
+# Itemsets frecuentes
+barplot(table(size(i_sick)),
+        xlab = "Tamaño de itemset", ylab = "Frecuencia",
+        main = "Tamaños de itemsets en los itemsets frecuentes")
+
+```
+
+Se calculan los itemsets maximales y cerrados.
+
+```{r}
+
+# Itemsets maximales
+imaxSick <- i_sick[is.maximal(i_sick)]
+
+# Itemsets cerrados
+icloSick <- i_sick[is.closed(i_sick)]
+
+```
+
+Se muestran en un gráfico el número de itemsets frecuentes, cerrados y maximales:
+
+```{r}
+
+barplot(c(Frecuentes = length(i_sick),
+          Cerrados = length(icloSick),
+          Maximales = length(imaxSick)),
+        ylab = "Frecuencia", xlab = "Tipo de itemsets")
+
+```
 
 Como primer foco de estudio, queremos encontrar reglas que muestren qué sintomas son los que causan el COVID19. Por ello, buscaremos reglas donde el consecuente sea COVID19 = 1.
 
@@ -79,6 +120,7 @@ inspect(tail(sub1))
 Inspeccionando estas reglas podemos ver conjuntos de síntomas que se tienen con frecuencia cuando los pacientes dan positivos en COVID19.
 
 Por ejemplo, la regla {Dry-Cough=1,Difficulty-in-Breathing=1} => {Covid_19=1}. Nos indica que, existe un alto número de pacientes dentro de nuestra base de datos que si tienen _"tos seca"_ y _"dificultad para respirar"_ son positivos en COVID19.
+
 Otra regla interesante sería por ejemplo, {Tiredness=1,Dry-Cough=1} => {Covid_19=1} que nos indica que los pacientes de nuestra base de conocimiento que dan positivos en COVID19, paceden _"cansancio"_ y _"tos seca_" con una frecuencia de 39.600 veces.
 
 ### Visualizar conjuntos de reglas
@@ -91,6 +133,21 @@ library(colorspace)
 plot(sub1, control = list(col=sequential_hcl(100)))
 
 ```
+
+
+```{r fig.height=7, fig.width=9}
+
+plot(sub1, method = "graph")
+
+```
+
+plot(sub1, method = "paracoord")
+
+plot(sub1, method = "paracoord", control = list(reorder = TRUE))
+
+```
+
+
 
 
 
