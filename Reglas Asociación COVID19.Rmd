@@ -1,0 +1,97 @@
+---
+title: "Reglas de Asociación"
+author: "Grupo G3 - Los Panteras"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: tactile
+    highlight: github
+---
+
+**NOTA IMPORTANTE:** El conjunto de datos que estudiamos en este apartado de reglas de asociación no está extraído de una fuente oficial como podría ser la web de la junta de Andalucía o el Gobierno de España como se han extraído en otros apartados. Por ello, no podemos verificar con total seguridad el resultado obtenido tras nuestro análisis, pero podemos obtener resultados interesantes y podemos comprobar que con este análisis realizado a este conjunto de datos se puede sacar información valiosa para combatir contra el virus.
+
+### Pre-procesamiento
+
+```{r warning=FALSE}
+
+library(arules)
+library(arulesViz)
+library(dplyr)
+library(rmarkdown)
+library(readr)
+
+```
+
+```{r}
+
+sick_patients <- read_csv("sick_patients.csv")
+
+# Cargamos en una nueva variable las columnas a estudiar:
+
+sick_patients2 <- sick_patients[, 2:20]
+
+# preprocesamos el dataset para buscar las reglas:
+
+# convertimos a factor de dos niveles (0,1) -> TRUE OR FALSE todas las columnas.
+sick_patients2[] <- lapply( sick_patients2, factor)
+col_names <- names(sick_patients2)
+sick_patients2[col_names] <- lapply(sick_patients2[col_names] , factor)
+
+# Convertimos a transaction el df para poder crear reglas.
+sick_patients2 <- as(sick_patients2, "transactions")
+
+str(sick_patients2)
+dim(sick_patients2)
+
+
+```
+
+### Reglas de Asociación
+
+Como primer foco de estudio, queremos encontrar reglas que muestren qué sintomas son los que causan el COVID19. Por ello, buscaremos reglas donde el consecuente sea COVID19 = 1.
+
+```{r}
+
+r1 <- apriori(sick_patients2, list(supp = 0.1, conf = 0.3), appearance = list(default = "lhs", rhs = "Covid_19=1"))
+
+length(r1)
+inspect(head(r1))
+
+```
+
+En este caso, no nos interesa limpiar el conjunto de reglas buscando reglas reduntantes, pues al buscar reglas donde el consecuente siempre sea COVID19 = 1, se reduciría el conjunto de reglas a la regla:
+
+{}  => {Covid_19=1}
+
+Dentro del conjunto de reglas, buscaremos las reglas donde el antecedente sean los síntomas:
+
+```{r}
+
+# Con %oin% podremos seleccionar las reglas que tengan al menos uno de los items en lhs.
+
+sub1 <- subset(r1, subset=lhs%oin%c("Fever=1","Tiredness=1","Dry-Cough=1","Difficulty-in-Breathing=1","Sore-Throat=1","Pains=1","Nasal-Congestion=1","Runny-Nose=1", "Diarrhea=1"))
+length(sub1)
+
+inspect(tail(sub1))
+
+```
+
+Inspeccionando estas reglas podemos ver conjuntos de síntomas que se tienen con frecuencia cuando los pacientes dan positivos en COVID19.
+
+Por ejemplo, la regla {Dry-Cough=1,Difficulty-in-Breathing=1} => {Covid_19=1}. Nos indica que, existe un alto número de pacientes dentro de nuestra base de datos que si tienen _"tos seca"_ y _"dificultad para respirar"_ son positivos en COVID19.
+Otra regla interesante sería por ejemplo, {Tiredness=1,Dry-Cough=1} => {Covid_19=1} que nos indica que los pacientes de nuestra base de conocimiento que dan positivos en COVID19, paceden _"cansancio"_ y _"tos seca_" con una frecuencia de 39.600 veces.
+
+### Visualizar conjuntos de reglas
+
+Visualizamos el subconjunto de reglas según su soporte y confianza.
+
+```{r}
+
+library(colorspace)  
+plot(sub1, control = list(col=sequential_hcl(100)))
+
+```
+
+
+
+
