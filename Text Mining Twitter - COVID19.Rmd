@@ -1,0 +1,316 @@
+---
+title: "Text Mining Twitter - COVID19"
+author: "Juan Manuel Morales Joya"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: tactile
+    highlight: github
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Durante todo este estudio, hemos basado el análisis del COVID-19 en datos empíricos, datos concretos o información extraída de fuentes oficiales como son la Junta de Andalucía. Además de esto, a menudo vemos en la televisión o en distintas fuentes de comunicación las opiniones o consejos para combatir el virús de distintas personas cualificadas como las distintas figuras del Ministerio de Sanidad o el Presidente de España. No obstante, pensamos que también es importante tener en cuenta lo que las personas comunes piensan sobre el virus, cuáles son sus preocupaciones o qué es lo que se preguntan con más frecuencia a cerca del COVID-19.
+
+Por todo esto, hemos elegido la red social Twitter como fuente de información para recolectar lo que los distintos usuarios piensan sobre lo que anteriormente hemos expuesto. Para ello, se ha extraído un conjunto de datos _(conjunto de tweets)_ que analizaremos posteriormente.
+
+```{r warning=FALSE}
+library(devtools)
+library(base64enc)
+library("twitteR")
+library("tm")
+library("ggplot2")
+library("ggmap")
+library("twitteR")
+library("httr")
+library("wordcloud")
+library ("SnowballC")
+library("RColorBrewer")
+library("stringr")
+library("lubridate")
+library("data.table")
+library(plyr)
+library(wordcloud)
+library(wordcloud2)
+library(rtweet)
+```
+
+**Procesamos los datos a partir de un csv extraído anteriormente**
+
+```{r}
+tweetsCovid <- read.csv("TweetsCovid.csv_", comment.char="#")
+
+class(tweetsCovid)
+```
+
+### Análisis del paquete de tweets
+
+> ¿Cuantos tweets hay?
+
+```{r}
+length(tweetsCovid$X)
+```
+
+> Analizamos la estructura de la información que se ha traido de Twitter.
+
+```{r}
+str(tweetsCovid)
+```
+
+> ¿Cuantos usuarios distintos han participado?
+
+```{r}
+length(unique(tweetsCovid$screenName))
+```
+
+> ¿Cuántos tweets son re-tweets? (isRetweet)
+
+```{r}
+length(tweetsCovid$isRetweet[tweetsCovid$isRetweet == TRUE])
+```
+
+> ¿Cuantos tweets han sido re-tweeteados? (retweeted)
+
+```{r}
+length(tweetsCovid$retweeted[tweetsCovid$retweeted == TRUE])
+```
+
+> ¿Cuál es el número medio de retweets? (retweetCount)
+
+```{r}
+
+mean(tweetsCovid$retweetCount)
+
+```
+
+
+
+> Buscamos los nombres de usuarios de las 10 personas que más han participado. ¿Quién es el usuario que más ha participado?
+
+```{r}
+# Los 10 usuarios que más han participado son:
+
+top10 <- summary(tweetsCovid$screenName)[1:10]
+top10
+
+# La persona que más ha participado es:
+
+fist <- summary(tweetsCovid$screenName)[1]
+fist
+
+```
+
+> Extraer en un data frame aquellos tweets re-tuiteados más de 5 veces (retweetCount).
+
+```{r}
+
+library(dplyr)
+
+dtRT5 <- tweetsCovid %>%
+  dplyr::filter(tweetsCovid$retweetCount > 5)
+
+head(dtRT5)
+class(dtRT5) # Es un dataframe
+
+```
+
+> Aplicamos a los tweets distintas técnicas de Text-Mining:
+
+**Técnicas con paquete tm**
+
+>> Preprocesamiento de los datos:
+
+```{r}
+# Personalizar lista de stopwords
+my.stopwords <-c(stopwords('english'),'mi','etc')  
+
+clean.text <-function(Corpus,my.stopwords){
+  Corpus <- tm_map(Corpus,content_transformer(tolower))
+  Corpus <- tm_map(Corpus,removeNumbers)
+  Corpus <- tm_map(Corpus,removeWords,my.stopwords)
+  Corpus <- tm_map(Corpus,removePunctuation)
+  Corpus <- tm_map(Corpus,stripWhitespace)
+return(Corpus)  
+
+}# end clean.text function
+```
+
+Necesitamos definir los tweets como un corpus (colección de documentos de texto) preservando información de metadatos.
+
+```{r warning=FALSE}
+
+corpus <- Corpus(VectorSource(tweetsCovid$text))
+corpus <- clean.text(corpus,stopwords("english"))
+
+# Vemos el primer doc
+
+inspect(corpus[[1]])
+
+```
+
+```{r}
+corpus <- tm_map(corpus,removeWords,c('rt'))
+# Volvemos a verlo
+inspect(corpus[[1]])
+```
+
+Aplicamos la función anteriormente creada:
+
+```{r warning=FALSE}
+clean.text(corpus,my.stopwords)
+```
+
+Procedemos a realizar un preprocesamiento manual:
+
+```{r warning=FALSE}
+#Eliminar caracteres especiales
+for (j in seq(corpus))
+ {  corpus[[j]] <- gsub("/"," ",corpus[[j]])
+    corpus[[j]] <- gsub("@"," ",corpus[[j]])
+    corpus[[j]] <- gsub("\\|", " ", corpus[[j]])
+}
+
+toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", x))
+corpus <- tm_map(corpus, toSpace, "\n")
+```
+
+Vamos a limpiar los textos de caracteres raros, menciones, hashtag, http, https...
+
+```{r warning=FALSE}
+tweetsCovid$text <- stringr::str_replace_all(tweetsCovid$text, "#COVID19"," ")
+tweetsCovid$text <- stringr::str_replace_all(tweetsCovid$text, "#\\S+"," ") 
+tweetsCovid$text <- stringr::str_replace_all(tweetsCovid$text, "http\\S+\\s*"," ")
+tweetsCovid$text <- stringr::str_replace_all(tweetsCovid$text, "http[[\\b+RT]]"," ")
+tweetsCovid$text <- stringr::str_replace_all(tweetsCovid$text, "http[[:alnum:]]*"," ")
+tweetsCovid$text <- stringr::str_replace_all(tweetsCovid$text, "@\\w+"," ")
+tweetsCovid$text <- stringr::str_replace_all(tweetsCovid$text, "[[:cntrl:]]"," ")
+tweetsCovid$text <- stringr::str_replace_all(tweetsCovid$text, "[^\\x00-\\x7F]"," ")
+
+# Volvemos a crear el corpus
+
+corpus <- Corpus(VectorSource(tweetsCovid$text))
+corpus <- clean.text(corpus,stopwords("english"))
+corpus <- tm_map(corpus, function(x) iconv(enc2utf8(x), sub = "byte"))
+corpus <- tm_map(corpus, toSpace, "<d5>")
+corpus <- tm_map(corpus, toSpace, "<d1>")
+corpus <- tm_map(corpus, toSpace, "rt")
+corpus <- tm_map(corpus,removeWords,c('will', 'can', 'ago', 'just', 'amp'))
+```
+
+Análisis de Matriz de términos de documentos (MTD)
+
+```{r}
+dtm <- DocumentTermMatrix(corpus)
+dtm
+class(dtm)
+
+```
+
+Analizamos el dtm:
+
+```{r}
+freq <- colSums(as.matrix(dtm))
+length(freq)
+```
+
+
+>>Calculamos la media de la frecuencia de aparición de los términos
+
+```{r}
+mediafreq <- mean(freq)
+mediafreq
+```
+
+>>Encuentra los términos que ocurren más de la media.
+
+```{r}
+# Conversion a data frame de las frecuencias
+dtfreq <- as.data.frame(names(freq))
+dtfreq <- cbind(dtfreq, freq)
+names(dtfreq) <- c("término", "freq")
+dtmedia <- dtfreq %>%
+  dplyr::filter(dtfreq$freq > mediafreq)
+#View(dtmedia)
+```
+
+>>Ordenamos este data.frame por la frecuencia
+
+```{r}
+dtmedia <- dtmedia[order(dtmedia$freq),]
+#View(dtmedia)
+```
+
+### Visualización de términos frecuentes
+
+>>Hacemos un plot de los términos más frecuentes.
+
+```{r}
+set.seed(142)
+wordcloud(names(freq), freq, min.freq=75)
+```
+
+Visualizamos como hay palabras claves que son frecuentes y preocupan a la mayoría de personas en Twitter. Ejemplo de estas son: _muertes_, _casos confirmados_ o _salud_ que indican la preocupación de las personas por los principales problemas que atentan directamente a la salud de las personas.
+
+También es interesante destacar las palabras que muestran o representan cierta actualidad o _"búsqueda por datos recientes"_. Estas palabras son: _ahora_, _actualizar_, _nuevo_, u _hoy_. Esto muestra la necesidad de estar informado diariamente sobre los nuevos acontecimientos producidos, ya que como sabemos los datos sobre este virús cambian en días u horas.
+
+>>Generamos diversos wordclouds para diferenciar distintas visualizaciones de los datos.
+
+```{r}
+wordcloud(names(freq), freq, scale=c(3,0.5), max.words=60, random.order=FALSE, 
+          rot.per=0.10, use.r.layout=TRUE, colors=brewer.pal(6, "Dark2"))
+
+wordcloud(names(freq), freq, scale=c(3,0.5), max.words=60, random.order=FALSE, 
+          rot.per=0.10, use.r.layout=TRUE, colors=brewer.pal(12,"Paired"))
+```
+
+>> Generamos un gráfico del paquete wordcloud2.
+
+```{r}
+wordcloud2(dtfreq, color = "random-light", backgroundColor = "black")
+```
+
+
+
+> Para las 5 palabras más importantes de nuestro análisis encontramos palabras que estén relacionadas. Hacemos plot de las asociaciones.
+
+```{r}
+freqOrd <- dtfreq %>%
+  dplyr::arrange(desc(freq))
+
+cinco <- freqOrd$término[1:5]
+cinco <- as.character(cinco)
+cinco
+
+asoc <- findAssocs(dtm, cinco[1], corlimit=0.35)
+asoc
+```
+
+> Para la palabra más frecuente de nuestro análisis buscamos los tweets en los que está dicho término. Guardaremos estos términos en un data.frame que tendrá como columnas: término, usuario, texto.
+
+```{r}
+
+primera <- cinco[1]
+primera
+
+# Tenemos que crear el dataframe
+
+dtprimero <- tweetsCovid  %>%
+  dplyr::select(screenName, text) %>%
+  dplyr::mutate(termino = primera)
+
+dtprimero <- dtprimero[grepl(primera, tweetsCovid$text), ]
+
+names(dtprimero) <- c("usuario", "texto", "término")
+
+#View(dtprimero)
+
+```
+
+Vemos como la palabra más frecuente es _"casos"_ lo que representa la preocupación mundial por saber cúantos son los casos actuales de covid19, cuántos son los casos que se han recuperado, cuántos han fallecido, etc...
+
+
+`Conclusión:` Hemos comprobado lo que los usuarios de Twitter piensan o escriben con más frecuencia sobre el virus a estudiar. Con esto mostramos cuáles son las preocupaciones o qué es lo que se piensa desde el punto de vista del ciudadano común, información que también es valiosa e importante de cara a diversos estudios o para tener en cuenta sobre ciertos términos.
+
+En general, hemos comprobado que los términos que más preocupan son los que interfieren directamente en nuestra salud, ya sea los "casos" de Covid-19 o las "muertes" por este dichoso virús. También hemos comprobado que las personas necesitan de la búsqueda frecuente de la información más actual sobre el Covid, y para ello, Twitter es una fuente de búsqueda clave.
