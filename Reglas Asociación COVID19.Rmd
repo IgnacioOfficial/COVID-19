@@ -89,6 +89,8 @@ barplot(c(Frecuentes = length(i_sick),
 
 ```
 
+**Estudio concreto COVID-19**
+
 Como primer foco de estudio, queremos encontrar reglas que muestren qué sintomas son los que causan el COVID19. Por ello, buscaremos reglas donde el consecuente sea COVID19 = 1.
 
 ```{r}
@@ -121,7 +123,7 @@ Inspeccionando estas reglas podemos ver conjuntos de síntomas que se tienen con
 
 Por ejemplo, la regla {Dry-Cough=1,Difficulty-in-Breathing=1} => {Covid_19=1}. Nos indica que, existe un alto número de pacientes dentro de nuestra base de datos que si tienen _"tos seca"_ y _"dificultad para respirar"_ son positivos en COVID19.
 
-Otra regla interesante sería por ejemplo, {Tiredness=1,Dry-Cough=1} => {Covid_19=1} que nos indica que los pacientes de nuestra base de conocimiento que dan positivos en COVID19, paceden _"cansancio"_ y _"tos seca_" con una frecuencia de 39.600 veces.
+Otra regla interesante sería por ejemplo, {Tiredness=1,Dry-Cough=1} => {Covid_19=1} que nos indica que los pacientes de nuestra base de conocimiento que dan positivos en COVID19, paceden _"cansancio"_ y _"tos seca"_ con una frecuencia de 39.600 veces.
 
 ### Visualizar conjuntos de reglas
 
