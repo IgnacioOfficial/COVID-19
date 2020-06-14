@@ -12,7 +12,7 @@ output:
 
 ### Pre-procesamiento
 
-```{r warning=FALSE, message=""}
+```{r warning=FALSE, message=FALSE}
 
 library(arules)
 library(arulesViz)
@@ -48,7 +48,7 @@ dim(sick_patients2)
 
 ### Reglas de Asociación
 
-Se realiza el método a priori de reglas de asociación, con 10% como mínimo de soporte de un itemset.
+Para realizar un primer análisis del conjunto de todas las reglas, realizamos el método a priori de reglas de asociación, con 10% como mínimo de soporte de un itemset.
 
 ```{r}
 
@@ -134,6 +134,9 @@ plot(sub1, control = list(col=sequential_hcl(100)))
 
 ```
 
+Ahora, nos centramos en los métodos de visualización proporcionados por el paquete ArulesViz:
+
+Representamos el subconjunto de reglas como un grafo:
 
 ```{r fig.height=7, fig.width=9}
 
@@ -141,11 +144,20 @@ plot(sub1, method = "graph")
 
 ```
 
+
+Representamos las reglas como un diagrama de coordenadas paralelas:
+
+```{r}
+
 plot(sub1, method = "paracoord")
 
+
+# Si las ordenamos:
 plot(sub1, method = "paracoord", control = list(reorder = TRUE))
 
 ```
+
+
 
 
 
